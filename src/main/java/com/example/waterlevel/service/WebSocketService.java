@@ -61,6 +61,20 @@ public class WebSocketService {
   }
 
   /**
+   * Sends threshold update confirmation to frontend.
+   *
+   * @param deviceId the device ID
+   * @param minThreshold the new minimum threshold
+   * @param maxThreshold the new maximum threshold
+   */
+  public void sendThresholdUpdateConfirmation(
+      final Long deviceId, final Double minThreshold, final Double maxThreshold) {
+    ThresholdUpdateMessage message =
+        new ThresholdUpdateMessage("threshold_updated", deviceId, minThreshold, maxThreshold);
+    sendMessage(deviceId, message, "threshold update");
+  }
+
+  /**
    * Common method to send WebSocket messages.
    *
    * @param deviceId the device ID
@@ -119,6 +133,26 @@ public class WebSocketService {
         final String type, final Long deviceId, final String pumpStatus, final String timestamp) {
       super(type, deviceId, timestamp);
       this.pumpStatus = pumpStatus;
+    }
+  }
+
+  /** DTO for threshold update message. */
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class ThresholdUpdateMessage extends BaseMessage {
+    private Double minThreshold;
+    private Double maxThreshold;
+
+    public ThresholdUpdateMessage(
+        final String type,
+        final Long deviceId,
+        final Double minThreshold,
+        final Double maxThreshold) {
+      super(type, deviceId, null);
+      this.minThreshold = minThreshold;
+      this.maxThreshold = maxThreshold;
     }
   }
 }

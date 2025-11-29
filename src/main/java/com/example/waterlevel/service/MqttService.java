@@ -6,6 +6,7 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service for publishing MQTT messages to hardware devices.
  *
- * <p>Handles publishing pump commands and threshold updates to devices via MQTT.
+ * <p>Handles publishing pump commands and threshold updates to devices via MQTT with retry logic.
  */
 @Service
 public class MqttService {
@@ -22,6 +23,18 @@ public class MqttService {
 
   private final MessageChannel mqttOutboundChannel;
   private final ObjectMapper objectMapper;
+
+  @Value("${spring.mqtt.retry.max-attempts:3}")
+  private int maxRetryAttempts;
+
+  @Value("${spring.mqtt.retry.initial-delay-ms:1000}")
+  private long initialDelayMs;
+
+  @Value("${spring.mqtt.retry.max-delay-ms:10000}")
+  private long maxDelayMs;
+
+  @Value("${spring.mqtt.retry.multiplier:2.0}")
+  private double multiplier;
 
   @Autowired
   public MqttService(final MessageChannel mqttOutboundChannel, final ObjectMapper objectMapper) {
@@ -64,25 +77,72 @@ public class MqttService {
     return publishMessage(topic, command);
   }
 
+  /**
+   * Publishes a message to MQTT with retry logic and exponential backoff.
+   *
+   * @param topic the MQTT topic
+   * @param payload the message payload
+   * @return true if message was sent successfully, false otherwise
+   */
   private boolean publishMessage(final String topic, final Object payload) {
+    // Serialize payload once (fail fast if serialization fails)
+    String jsonPayload;
     try {
-      String jsonPayload = objectMapper.writeValueAsString(payload);
-
-      mqttOutboundChannel.send(
-          MessageBuilder.withPayload(jsonPayload.getBytes())
-              .setHeader("mqtt_topic", topic)
-              .setHeader("mqtt_qos", 1)
-              .build());
-
-      LOGGER.info("MQTT message published to topic: {} with payload: {}", topic, jsonPayload);
-      return true;
+      jsonPayload = objectMapper.writeValueAsString(payload);
     } catch (JsonProcessingException e) {
-      LOGGER.error("Failed to serialize MQTT message payload", e);
-      return false;
-    } catch (Exception e) {
-      LOGGER.error("Failed to publish MQTT message to topic: {}", topic, e);
+      LOGGER.error("Failed to serialize MQTT message payload for topic: {}", topic, e);
       return false;
     }
+
+    // Retry logic with exponential backoff
+    long delay = initialDelayMs;
+    Exception lastException = null;
+
+    for (int attempt = 1; attempt <= maxRetryAttempts; attempt++) {
+      try {
+        mqttOutboundChannel.send(
+            MessageBuilder.withPayload(jsonPayload.getBytes())
+                .setHeader("mqtt_topic", topic)
+                .setHeader("mqtt_qos", 1)
+                .build());
+
+        if (attempt > 1) {
+          LOGGER.info("MQTT message published to topic: {} after {} attempt(s)", topic, attempt);
+        } else {
+          LOGGER.debug("MQTT message published to topic: {} with payload: {}", topic, jsonPayload);
+        }
+        return true;
+
+      } catch (Exception e) {
+        lastException = e;
+        LOGGER.warn(
+            "Failed to publish MQTT message to topic: {} (attempt {}/{}): {}",
+            topic,
+            attempt,
+            maxRetryAttempts,
+            e.getMessage());
+
+        // Don't wait after the last attempt
+        if (attempt < maxRetryAttempts) {
+          try {
+            Thread.sleep(delay);
+            delay = Math.min((long) (delay * multiplier), maxDelayMs);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Retry delay interrupted for topic: {}", topic, ie);
+            return false;
+          }
+        }
+      }
+    }
+
+    // All retry attempts failed
+    LOGGER.error(
+        "Failed to publish MQTT message to topic: {} after {} attempts",
+        topic,
+        maxRetryAttempts,
+        lastException);
+    return false;
   }
 
   /** DTO for pump start command. */
