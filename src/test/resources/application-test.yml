@@ -1,0 +1,35 @@
+# Test Configuration
+spring:
+  # Use in-memory H2 for tests
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  h2:
+    console:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # Security Configuration for tests
+  security:
+    jwt:
+      secret: 36467a12819db4d4d16ea45254a31402
+      expiration: 86400000
+
+# Disable logging during tests
+logging:
+  level:
+    root: WARN
+    com.example.waterlevel: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+
