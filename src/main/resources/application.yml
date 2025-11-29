@@ -39,6 +39,15 @@ spring:
   websocket:
     allowed-origins: "http://localhost:3000,http://localhost:4200"
 
+  # MQTT Configuration
+  mqtt:
+    broker:
+      url: ${MQTT_BROKER_URL:tcp://test.mosquitto.org:1883}
+    client:
+      id: ${MQTT_CLIENT_ID:water-level-backend}
+    username: ${MQTT_USERNAME:}
+    password: ${MQTT_PASSWORD:}
+
 # Logging Configuration
 logging:
   level:
