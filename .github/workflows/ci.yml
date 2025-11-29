@@ -9,6 +9,10 @@ on:
 jobs:
   test-and-analyze:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
 
     steps:
     - uses: actions/checkout@v4
@@ -50,6 +54,7 @@ jobs:
         name: Gradle Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
+        fail-on-error: false
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
@@ -74,6 +79,8 @@ jobs:
 
   dependency-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
@@ -88,7 +95,7 @@ jobs:
       run: ./gradlew dependencyCheckAnalyze
 
     - name: Upload dependency check report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-check-report
         path: build/reports/dependency-check-report.html
