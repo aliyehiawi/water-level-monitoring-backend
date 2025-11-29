@@ -6,6 +6,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 /** Utility class for security-related operations. */
 public class SecurityUtil {
 
+  private SecurityUtil() {
+    // Utility class - prevent instantiation
+  }
+
   /**
    * Gets the current authenticated user's username.
    *

@@ -26,6 +26,7 @@ public class SecurityConfig {
   }
 
   @Bean
+  @SuppressWarnings("java:S112") // Spring Security API requires Exception
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
@@ -50,6 +51,7 @@ public class SecurityConfig {
   }
 
   @Bean
+  @SuppressWarnings("java:S112") // Spring Security API requires Exception
   public AuthenticationManager authenticationManager(
       final AuthenticationConfiguration authenticationConfiguration) throws Exception {
     return authenticationConfiguration.getAuthenticationManager();

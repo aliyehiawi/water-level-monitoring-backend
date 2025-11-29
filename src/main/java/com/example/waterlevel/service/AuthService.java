@@ -2,6 +2,7 @@ package com.example.waterlevel.service;
 
 import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
+import com.example.waterlevel.dto.UserResponse;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.util.JwtUtil;
@@ -68,14 +69,15 @@ public class AuthService {
             savedUser.getUsername(), savedUser.getRole().name(), savedUser.getId());
 
     // Build response
-    AuthResponse.UserDto userDto =
-        new AuthResponse.UserDto(
+    UserResponse userResponse =
+        new UserResponse(
             savedUser.getId(),
             savedUser.getUsername(),
             savedUser.getEmail(),
-            savedUser.getRole().name());
+            savedUser.getRole().name(),
+            savedUser.getCreatedAt());
 
-    return new AuthResponse(token, jwtUtil.getExpiration() / 1000, userDto);
+    return new AuthResponse(token, jwtUtil.getExpiration() / 1000, userResponse);
   }
 
   /**
@@ -99,10 +101,14 @@ public class AuthService {
     String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name(), user.getId());
 
     // Build response
-    AuthResponse.UserDto userDto =
-        new AuthResponse.UserDto(
-            user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
+    UserResponse userResponse =
+        new UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole().name(),
+            user.getCreatedAt());
 
-    return new AuthResponse(token, jwtUtil.getExpiration() / 1000, userDto);
+    return new AuthResponse(token, jwtUtil.getExpiration() / 1000, userResponse);
   }
 }

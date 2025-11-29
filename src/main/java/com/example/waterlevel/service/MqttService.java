@@ -3,6 +3,9 @@ package com.example.waterlevel.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,6 +149,9 @@ public class MqttService {
   }
 
   /** DTO for pump start command. */
+  @Getter
+  @Setter
+  @NoArgsConstructor
   public static class PumpStartCommand {
     private String command;
     private String timestamp;
@@ -156,33 +162,12 @@ public class MqttService {
       this.timestamp = timestamp.toString();
       this.initiatedBy = initiatedBy;
     }
-
-    public String getCommand() {
-      return command;
-    }
-
-    public void setCommand(final String command) {
-      this.command = command;
-    }
-
-    public String getTimestamp() {
-      return timestamp;
-    }
-
-    public void setTimestamp(final String timestamp) {
-      this.timestamp = timestamp;
-    }
-
-    public Long getInitiatedBy() {
-      return initiatedBy;
-    }
-
-    public void setInitiatedBy(final Long initiatedBy) {
-      this.initiatedBy = initiatedBy;
-    }
   }
 
   /** DTO for threshold update command. */
+  @Getter
+  @Setter
+  @NoArgsConstructor
   public static class ThresholdUpdateCommand {
     private Double minThreshold;
     private Double maxThreshold;
@@ -197,38 +182,6 @@ public class MqttService {
       this.minThreshold = minThreshold;
       this.maxThreshold = maxThreshold;
       this.timestamp = timestamp.toString();
-      this.updatedBy = updatedBy;
-    }
-
-    public Double getMinThreshold() {
-      return minThreshold;
-    }
-
-    public void setMinThreshold(final Double minThreshold) {
-      this.minThreshold = minThreshold;
-    }
-
-    public Double getMaxThreshold() {
-      return maxThreshold;
-    }
-
-    public void setMaxThreshold(final Double maxThreshold) {
-      this.maxThreshold = maxThreshold;
-    }
-
-    public String getTimestamp() {
-      return timestamp;
-    }
-
-    public void setTimestamp(final String timestamp) {
-      this.timestamp = timestamp;
-    }
-
-    public Long getUpdatedBy() {
-      return updatedBy;
-    }
-
-    public void setUpdatedBy(final Long updatedBy) {
       this.updatedBy = updatedBy;
     }
   }

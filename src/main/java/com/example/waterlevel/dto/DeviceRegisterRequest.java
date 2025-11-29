@@ -5,8 +5,16 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /** DTO for device registration request. */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class DeviceRegisterRequest {
 
   @NotBlank(message = "Device name is required")
@@ -22,37 +30,4 @@ public class DeviceRegisterRequest {
   @DecimalMin(value = "0.0", message = "Maximum threshold must be >= 0")
   @DecimalMax(value = "999.99", message = "Maximum threshold must be <= 999.99")
   private Double maxThreshold;
-
-  public DeviceRegisterRequest() {}
-
-  public DeviceRegisterRequest(
-      final String name, final Double minThreshold, final Double maxThreshold) {
-    this.name = name;
-    this.minThreshold = minThreshold;
-    this.maxThreshold = maxThreshold;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(final String name) {
-    this.name = name;
-  }
-
-  public Double getMinThreshold() {
-    return minThreshold;
-  }
-
-  public void setMinThreshold(final Double minThreshold) {
-    this.minThreshold = minThreshold;
-  }
-
-  public Double getMaxThreshold() {
-    return maxThreshold;
-  }
-
-  public void setMaxThreshold(final Double maxThreshold) {
-    this.maxThreshold = maxThreshold;
-  }
 }
