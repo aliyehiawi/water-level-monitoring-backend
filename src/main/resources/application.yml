@@ -47,6 +47,11 @@ spring:
       id: ${MQTT_CLIENT_ID:water-level-backend}
     username: ${MQTT_USERNAME:}
     password: ${MQTT_PASSWORD:}
+    retry:
+      max-attempts: ${MQTT_RETRY_MAX_ATTEMPTS:3}
+      initial-delay-ms: ${MQTT_RETRY_INITIAL_DELAY_MS:1000}
+      max-delay-ms: ${MQTT_RETRY_MAX_DELAY_MS:10000}
+      multiplier: ${MQTT_RETRY_MULTIPLIER:2.0}
 
 # Logging Configuration
 logging:
