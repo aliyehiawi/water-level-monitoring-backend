@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Pre-commit hook script
+# This script runs before each commit to ensure code quality
+
+echo "Running pre-commit checks..."
+
+# Apply code formatting
+echo "Applying code formatting..."
+./gradlew spotlessApply
+if [ $? -ne 0 ]; then
+    echo "❌ Code formatting failed!"
+    exit 1
+fi
+
+echo "✅ Code formatting applied successfully"
+
+# Run tests
+echo "Running tests..."
+./gradlew test
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed!"
+    exit 1
+fi
+
+echo "✅ All tests passed"
+
+# Run static analysis
+echo "Running static analysis..."
+./gradlew checkstyleMain
+if [ $? -ne 0 ]; then
+    echo "❌ Checkstyle violations found!"
+    exit 1
+fi
+
+echo "✅ Static analysis passed"
+
+echo "🎉 All pre-commit checks passed!"
+exit 0
