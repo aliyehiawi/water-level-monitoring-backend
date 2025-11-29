@@ -1,33 +1,18 @@
 package com.example.waterlevel.dto;
 
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /** DTO for pump status responses. */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PumpStatusResponse {
 
   private String pumpStatus;
   private LocalDateTime lastUpdate;
-
-  public PumpStatusResponse() {}
-
-  public PumpStatusResponse(final String pumpStatus, final LocalDateTime lastUpdate) {
-    this.pumpStatus = pumpStatus;
-    this.lastUpdate = lastUpdate;
-  }
-
-  public String getPumpStatus() {
-    return pumpStatus;
-  }
-
-  public void setPumpStatus(final String pumpStatus) {
-    this.pumpStatus = pumpStatus;
-  }
-
-  public LocalDateTime getLastUpdate() {
-    return lastUpdate;
-  }
-
-  public void setLastUpdate(final LocalDateTime lastUpdate) {
-    this.lastUpdate = lastUpdate;
-  }
 }
