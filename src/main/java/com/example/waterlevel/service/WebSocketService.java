@@ -1,5 +1,9 @@
 package com.example.waterlevel.service;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 public class WebSocketService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketService.class);
+  private static final String DESTINATION_PREFIX = "/topic/device/";
 
   private final SimpMessagingTemplate messagingTemplate;
 
@@ -36,17 +41,9 @@ public class WebSocketService {
       final Double waterLevel,
       final String pumpStatus,
       final String timestamp) {
-    try {
-      SensorUpdateMessage message =
-          new SensorUpdateMessage("sensor_update", deviceId, waterLevel, pumpStatus, timestamp);
-
-      String destination = "/topic/device/" + deviceId;
-      messagingTemplate.convertAndSend(destination, message);
-
-      LOGGER.debug("WebSocket message sent to {}: {}", destination, message);
-    } catch (Exception e) {
-      LOGGER.error("Failed to send WebSocket sensor update for device {}", deviceId, e);
-    }
+    SensorUpdateMessage message =
+        new SensorUpdateMessage("sensor_update", deviceId, waterLevel, pumpStatus, timestamp);
+    sendMessage(deviceId, message, "sensor update");
   }
 
   /**
@@ -58,26 +55,46 @@ public class WebSocketService {
    */
   public void sendPumpStatusUpdate(
       final Long deviceId, final String pumpStatus, final String timestamp) {
+    PumpStatusMessage message =
+        new PumpStatusMessage("pump_status", deviceId, pumpStatus, timestamp);
+    sendMessage(deviceId, message, "pump status update");
+  }
+
+  /**
+   * Common method to send WebSocket messages.
+   *
+   * @param deviceId the device ID
+   * @param message the message object
+   * @param messageType the type of message for logging
+   */
+  private void sendMessage(final Long deviceId, final Object message, final String messageType) {
     try {
-      PumpStatusMessage message =
-          new PumpStatusMessage("pump_status", deviceId, pumpStatus, timestamp);
-
-      String destination = "/topic/device/" + deviceId;
+      String destination = DESTINATION_PREFIX + deviceId;
       messagingTemplate.convertAndSend(destination, message);
-
-      LOGGER.debug("WebSocket pump status update sent to {}: {}", destination, message);
+      LOGGER.debug("WebSocket {} sent to {}: {}", messageType, destination, message);
     } catch (Exception e) {
-      LOGGER.error("Failed to send WebSocket pump status update for device {}", deviceId, e);
+      LOGGER.error("Failed to send WebSocket {} for device {}", messageType, deviceId, e);
     }
   }
 
-  /** DTO for sensor update message. */
-  public static class SensorUpdateMessage {
+  /** Base message class with common fields. */
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class BaseMessage {
     private String type;
     private Long deviceId;
+    private String timestamp;
+  }
+
+  /** DTO for sensor update message. */
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class SensorUpdateMessage extends BaseMessage {
     private Double waterLevel;
     private String pumpStatus;
-    private String timestamp;
 
     public SensorUpdateMessage(
         final String type,
@@ -85,99 +102,23 @@ public class WebSocketService {
         final Double waterLevel,
         final String pumpStatus,
         final String timestamp) {
-      this.type = type;
-      this.deviceId = deviceId;
+      super(type, deviceId, timestamp);
       this.waterLevel = waterLevel;
       this.pumpStatus = pumpStatus;
-      this.timestamp = timestamp;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public void setType(final String type) {
-      this.type = type;
-    }
-
-    public Long getDeviceId() {
-      return deviceId;
-    }
-
-    public void setDeviceId(final Long deviceId) {
-      this.deviceId = deviceId;
-    }
-
-    public Double getWaterLevel() {
-      return waterLevel;
-    }
-
-    public void setWaterLevel(final Double waterLevel) {
-      this.waterLevel = waterLevel;
-    }
-
-    public String getPumpStatus() {
-      return pumpStatus;
-    }
-
-    public void setPumpStatus(final String pumpStatus) {
-      this.pumpStatus = pumpStatus;
-    }
-
-    public String getTimestamp() {
-      return timestamp;
-    }
-
-    public void setTimestamp(final String timestamp) {
-      this.timestamp = timestamp;
     }
   }
 
   /** DTO for pump status message. */
-  public static class PumpStatusMessage {
-    private String type;
-    private Long deviceId;
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class PumpStatusMessage extends BaseMessage {
     private String pumpStatus;
-    private String timestamp;
 
     public PumpStatusMessage(
         final String type, final Long deviceId, final String pumpStatus, final String timestamp) {
-      this.type = type;
-      this.deviceId = deviceId;
+      super(type, deviceId, timestamp);
       this.pumpStatus = pumpStatus;
-      this.timestamp = timestamp;
-    }
-
-    public String getType() {
-      return type;
-    }
-
-    public void setType(final String type) {
-      this.type = type;
-    }
-
-    public Long getDeviceId() {
-      return deviceId;
-    }
-
-    public void setDeviceId(final Long deviceId) {
-      this.deviceId = deviceId;
-    }
-
-    public String getPumpStatus() {
-      return pumpStatus;
-    }
-
-    public void setPumpStatus(final String pumpStatus) {
-      this.pumpStatus = pumpStatus;
-    }
-
-    public String getTimestamp() {
-      return timestamp;
-    }
-
-    public void setTimestamp(final String timestamp) {
-      this.timestamp = timestamp;
     }
   }
 }
