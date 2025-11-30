@@ -1,0 +1,80 @@
+server:
+  port: ${SERVER_PORT}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/api}
+
+spring:
+  # Database Configuration - Production
+  # REQUIRED: Set DB_URL, DB_USERNAME, DB_PASSWORD via environment variables
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      # Production pool settings (larger than development)
+      # Shared settings (connection-timeout, idle-timeout, max-lifetime) are in application.yml
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      leak-detection-threshold: 60000
+
+  h2:
+    console:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:validate}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: false
+        # JPA batch settings (batch_size, order_inserts, order_updates) are in application.yml
+
+  # Security Configuration - Production
+  # REQUIRED: Set JWT_SECRET via environment variable (generate with: openssl rand -hex 32)
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+
+  # WebSocket Configuration - Production
+  # REQUIRED: Set WEBSOCKET_ALLOWED_ORIGINS via environment variable
+  websocket:
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS}
+
+  # MQTT Configuration - Production
+  # REQUIRED: Set MQTT_BROKER_URL and MQTT_CLIENT_ID via environment variables
+  mqtt:
+    broker:
+      url: ${MQTT_BROKER_URL}
+    client:
+      id: ${MQTT_CLIENT_ID}
+    username: ${MQTT_USERNAME:}
+    password: ${MQTT_PASSWORD:}
+    # MQTT connection settings (shared config in application.yml)
+    # Only environment-specific values here
+
+# CORS Configuration - Production
+# REQUIRED: Set CORS_ALLOWED_ORIGINS via environment variable
+# Other CORS settings (methods, headers, etc.) are in application.yml
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+# Logging Configuration - Production
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:WARN}
+    com.example.waterlevel: ${LOG_LEVEL_APP:INFO}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:WARN}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BINDER:OFF}
+
+# Swagger/OpenAPI Configuration - Production
+# Set SPRINGDOC_SERVER_URL to your production domain
+springdoc:
+  server-url: ${SPRINGDOC_SERVER_URL:}
+  contact:
+    name: ${SPRINGDOC_CONTACT_NAME:Water Level Monitoring Team}
+    email: ${SPRINGDOC_CONTACT_EMAIL:}

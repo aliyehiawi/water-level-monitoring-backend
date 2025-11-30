@@ -4,7 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /** Utility class for security-related operations. */
-public class SecurityUtil {
+public final class SecurityUtil {
 
   private SecurityUtil() {
     // Utility class - prevent instantiation

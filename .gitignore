@@ -62,8 +62,7 @@ Desktop.ini
 
 # Application specific
 application-local.yml
-application-dev.yml
-application-prod.yml
+# Note: application-dev.yml and application-prod.yml are committed (they contain no secrets)
 
 # Security
 *.key
@@ -90,6 +89,8 @@ application-prod.yml
 .env
 .env.local
 .env.*.local
+
+# Gradle local properties (not used - use environment variables instead)
 
 # Docker
 docker-compose.override.yml

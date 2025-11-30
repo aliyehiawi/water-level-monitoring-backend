@@ -6,8 +6,13 @@ import com.example.waterlevel.dto.UserResponse;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,12 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 /** Controller for authentication endpoints (register, login, get current user). */
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
   private final AuthService authService;
   private final UserRepository userRepository;
 
-  @Autowired
   public AuthController(final AuthService authService, final UserRepository userRepository) {
     this.authService = authService;
     this.userRepository = userRepository;
@@ -38,14 +45,21 @@ public class AuthController {
    * @param request the registration request
    * @return the authentication response with JWT token
    */
+  @Operation(
+      summary = "Register a new user",
+      description = "Creates a new user account and returns a JWT token")
+  @ApiResponses({
+    @ApiResponse(responseCode = "201", description = "User registered successfully"),
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid request data or username/email already exists")
+  })
   @PostMapping("/register")
   public ResponseEntity<AuthResponse> register(@Valid @RequestBody final AuthRequest request) {
-    try {
-      AuthResponse response = authService.register(request);
-      return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-    }
+    LOGGER.info("Registration attempt for username: {}", request.getUsername());
+    AuthResponse response = authService.register(request);
+    LOGGER.info("User registered successfully: {}", request.getUsername());
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   /**
@@ -54,14 +68,17 @@ public class AuthController {
    * @param request the login request
    * @return the authentication response with JWT token
    */
+  @Operation(summary = "Login user", description = "Authenticates a user and returns a JWT token")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "Login successful"),
+    @ApiResponse(responseCode = "401", description = "Invalid username or password")
+  })
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody final AuthRequest request) {
-    try {
-      AuthResponse response = authService.login(request);
-      return ResponseEntity.ok(response);
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
+    LOGGER.info("Login attempt for username: {}", request.getUsername());
+    AuthResponse response = authService.login(request);
+    LOGGER.info("User logged in successfully: {}", request.getUsername());
+    return ResponseEntity.ok(response);
   }
 
   /**
@@ -70,25 +87,29 @@ public class AuthController {
    * @param authentication the authentication object
    * @return the user information
    */
+  @Operation(
+      summary = "Get current user",
+      description = "Returns information about the currently authenticated user")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "User information retrieved successfully"),
+    @ApiResponse(responseCode = "401", description = "User not authenticated")
+  })
   @GetMapping("/me")
   public ResponseEntity<UserResponse> getCurrentUser(final Authentication authentication) {
     if (authentication == null || authentication.getName() == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+      LOGGER.warn("Get current user called without authentication");
+      throw new IllegalStateException("User not authenticated");
     }
 
+    LOGGER.debug("Get current user requested for: {}", authentication.getName());
     User user =
         userRepository
             .findByUsername(authentication.getName())
-            .orElseThrow(
-                () -> new UsernameNotFoundException("User not found: " + authentication.getName()));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
     UserResponse response =
         new UserResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getRole().name(),
-            user.getCreatedAt());
+            user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.getCreatedAt());
 
     return ResponseEntity.ok(response);
   }

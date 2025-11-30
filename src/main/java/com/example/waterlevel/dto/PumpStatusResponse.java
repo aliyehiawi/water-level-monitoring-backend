@@ -1,5 +1,6 @@
 package com.example.waterlevel.dto;
 
+import com.example.waterlevel.entity.PumpStatus;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,6 +14,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PumpStatusResponse {
 
-  private String pumpStatus;
+  private PumpStatus pumpStatus;
   private LocalDateTime lastUpdate;
 }

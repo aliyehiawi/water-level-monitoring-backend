@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,9 @@ public class JwtUtil {
   private Long expiration;
 
   private SecretKey getSigningKey() {
+    if (secret == null || secret.trim().isEmpty()) {
+      throw new IllegalStateException("JWT secret is not configured");
+    }
     return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
   }
 
@@ -31,14 +35,16 @@ public class JwtUtil {
    * @return the JWT token
    */
   public String generateToken(final String username, final String role, final Long userId) {
-    Date now = new Date();
-    Date expiryDate = new Date(now.getTime() + expiration);
+    Instant now = Instant.now();
+    Instant expiryInstant = now.plusMillis(expiration);
+    Date nowDate = Date.from(now);
+    Date expiryDate = Date.from(expiryInstant);
 
     return Jwts.builder()
         .subject(username)
         .claim("role", role)
         .claim("userId", userId)
-        .issuedAt(now)
+        .issuedAt(nowDate)
         .expiration(expiryDate)
         .signWith(getSigningKey())
         .compact();
@@ -80,13 +86,16 @@ public class JwtUtil {
   /**
    * Validates a JWT token.
    *
+   * <p>Checks if the token is properly signed and not expired.
+   *
    * @param token the JWT token
    * @return true if valid, false otherwise
    */
   public boolean validateToken(final String token) {
     try {
       Claims claims = getClaimsFromToken(token);
-      return !claims.getExpiration().before(new Date());
+      Instant expirationInstant = claims.getExpiration().toInstant();
+      return !expirationInstant.isBefore(Instant.now());
     } catch (Exception e) {
       return false;
     }

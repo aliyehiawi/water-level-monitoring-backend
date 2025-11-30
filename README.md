@@ -68,73 +68,145 @@ A comprehensive backend system for monitoring water levels with automated pump c
 
 ## 📚 API Documentation
 
-### Authentication Endpoints
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
+### Interactive Documentation
+- **Swagger UI**: `http://localhost:8080/api/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8080/api/api-docs`
 
-### Device Management (Admin)
-- `POST /api/devices/register` - Register new device
+### Authentication Endpoints
+- `POST /api/auth/register` - User registration (returns JWT token)
+- `POST /api/auth/login` - User login (returns JWT token)
+- `GET /api/auth/me` - Get current authenticated user
+
+### Device Management (Admin Only)
+- `POST /api/devices/register` - Register new device (returns device key)
 - `GET /api/devices` - List all devices
 - `DELETE /api/devices/{id}` - Delete device
 
-### Data Collection (Hardware)
-- `POST /api/data/sensor` - Submit sensor data
-- `GET /api/data/pump-flag/{deviceKey}` - Check manual pump flag
-- `PUT /api/data/pump-flag/{deviceKey}/reset` - Reset pump flag
+### Threshold Management (Admin Only)
+- `GET /api/devices/{deviceId}/thresholds` - Get current thresholds
+- `PUT /api/devices/{deviceId}/thresholds` - Update thresholds (publishes to MQTT)
 
-### Dashboard (All Users)
-- `GET /api/dashboard/devices` - Get accessible devices
-- `GET /api/dashboard/data/{deviceId}` - Get water level history
+### Pump Control (Admin Only)
+- `POST /api/devices/{deviceId}/pump/start` - Manually start pump (publishes to MQTT)
+- `GET /api/devices/{deviceId}/pump/status` - Get current pump status
 
-For complete API documentation, visit the Swagger UI at `/swagger-ui.html`
+### User Management (Admin Only)
+- `GET /api/users` - List all users
+- `PUT /api/users/{id}/promote` - Promote user to admin
+- `DELETE /api/users/{id}` - Delete user
+
+### WebSocket Endpoints
+- `WS /api/ws` - WebSocket endpoint for real-time updates
+- Topics:
+  - `/topic/device/{deviceId}` - Device updates (sensor data, pump status, thresholds)
+
+### Postman Collection
+Import the Postman collection from `postman/Water-Level-Monitoring-API.postman_collection.json` for easy API testing.
 
 ## 🔧 Configuration
 
-### Database
-The application uses H2 in-memory database by default. For production:
+### Spring Boot Profiles (Best Practice)
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/waterlevel
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-```
+The application uses **Spring Boot profiles** for configuration management:
 
-### JWT Configuration
-```yaml
-spring:
-  security:
-    jwt:
-      secret: ${JWT_SECRET}
-      expiration: ${JWT_EXPIRATION:86400000}
-```
+- **`application.yml`** - Base configuration (shared technical constants)
+- **`application-dev.yml`** - Development profile (safe defaults, can be committed)
+- **`application-prod.yml`** - Production profile (structure only, no secrets)
 
-**Note:** The default JWT secret in `application.yml` is for development only. Always use environment variables in production.
+**How it works:**
+1. Non-sensitive defaults → YAML files (committed to Git)
+2. Secrets & environment-specific values → Environment variables (NOT committed)
 
-### Production Profile
-Use the `prod` profile for production deployments:
+### Running the Application
+
+**Development:**
 ```bash
-java -jar app.jar --spring.profiles.active=prod
+# Uses application-dev.yml automatically
+./gradlew bootRun
+
+# Or explicitly set profile
+export SPRING_PROFILES_ACTIVE=dev
+./gradlew bootRun
 ```
 
-Ensure all required environment variables are set:
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `JWT_SECRET`
+**Production:**
+```bash
+# Set required environment variables, then:
+export SPRING_PROFILES_ACTIVE=prod
+java -jar app.jar
+```
+
+### Environment Variables
+
+**Required (Secrets - must be set in all environments):**
+- `JWT_SECRET` - Generate with: `openssl rand -hex 32`
+
+**Required (Production only - set via deployment platform):**
+- `DB_URL` - Database connection URL (e.g., `jdbc:postgresql://host:5432/db`)
+- `DB_USERNAME` - Database username
+- `DB_PASSWORD` - Database password
+- `MQTT_BROKER_URL` - MQTT broker URL
+- `MQTT_CLIENT_ID` - MQTT client ID
+- `CORS_ALLOWED_ORIGINS` - Comma-separated allowed origins
+- `WEBSOCKET_ALLOWED_ORIGINS` - Comma-separated allowed origins
+
+**Optional (override defaults if needed):**
+- `SERVER_PORT` - Server port (default: 8080)
+- `JWT_EXPIRATION` - Token expiration in milliseconds (default: 86400000)
+- `SPRINGDOC_SERVER_URL` - OpenAPI server URL
+- `SPRINGDOC_CONTACT_EMAIL` - Contact email for API docs
+
+See `application-prod.yml` for production requirements and `application-dev.yml` for development defaults.
+
+### Development Configuration
+
+The `dev` profile (`application-dev.yml`) includes:
+- H2 in-memory database (default)
+- H2 console enabled
+- Debug logging
+- Public MQTT test broker (`test.mosquitto.org`)
+- Localhost CORS origins
+
+**To run locally:**
+1. Set `JWT_SECRET` environment variable (required)
+2. Optionally set `MQTT_BROKER_URL` if you want a different broker
+3. Run: `./gradlew bootRun` (uses `dev` profile by default)
+
+### Production Configuration
+
+The `prod` profile (`application-prod.yml`) requires:
+- PostgreSQL database (via `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)
+- Production MQTT broker (via `MQTT_BROKER_URL`, `MQTT_CLIENT_ID`)
+- Production CORS origins (via `CORS_ALLOWED_ORIGINS`)
+- All secrets via environment variables
+
+**To deploy:**
+1. Set all required environment variables in your deployment platform
+2. Set `SPRING_PROFILES_ACTIVE=prod`
+3. Deploy the application
+
+### MQTT Configuration
+
+See [MQTT_SETUP.md](MQTT_SETUP.md) for detailed setup instructions.
+
+**Development:** Uses public test broker (`test.mosquitto.org`) by default  
+**Production:** Configure your own MQTT broker (HiveMQ Cloud, self-hosted Mosquitto, etc.)
 
 ### Logging
-Logs are configured with MDC for tracing:
-- Application logs: `logs/application.log`
-- Security logs: `logs/security.log`
-- Audit logs: `logs/audit.log`
+Comprehensive logging is configured:
+- **Application logs**: `logs/application.log` - General application logs
+- **Security logs**: `logs/security.log` - Authentication and authorization events
+- **Audit logs**: `logs/audit.log` - Admin actions and critical operations
+
+Log levels:
+- **Development**: DEBUG for application, INFO for root
+- **Production**: INFO for application, WARN for root
 
 ## 🧪 Testing
 
+### Running Tests
 ```bash
-# Run unit tests
+# Run all tests
 ./gradlew test
 
 # Run with coverage report
@@ -143,6 +215,21 @@ Logs are configured with MDC for tracing:
 # View coverage report
 open build/jacocoHtml/index.html
 ```
+
+### Test Structure
+- **Unit Tests**: Service layer tests (`src/test/java/com/example/waterlevel/service/`)
+- **Controller Tests**: REST endpoint tests using MockMvc (`src/test/java/com/example/waterlevel/controller/`)
+- **Integration Tests**: Full flow tests (`src/test/java/com/example/waterlevel/integration/`)
+
+### Test Coverage
+The project uses JaCoCo for code coverage reporting. Aim for at least 80% coverage.
+
+### Postman Collection
+Import the Postman collection for manual API testing:
+1. Import `postman/Water-Level-Monitoring-API.postman_collection.json`
+2. Import `postman/Water-Level-Monitoring-API.postman_environment.json`
+3. Set `base_url` environment variable
+4. Login to automatically set `jwt_token` variable
 
 ## 📊 Code Quality
 
@@ -163,33 +250,51 @@ open build/jacocoHtml/index.html
 ## 🚀 Deployment
 
 ### CI/CD Pipeline
+The GitHub Actions workflow automatically:
 1. Code formatting validation (`spotlessCheck`)
 2. Static analysis (`checkstyle`)
 3. Unit tests (`test`)
 4. Code coverage (`jacocoTestReport`)
 5. SonarQube analysis (`sonar`)
 
-### Environment Variables
+**For local SonarQube analysis:**
+1. Get your SonarCloud token: https://sonarcloud.io → My Account → Security
+2. Set environment variable:
+   ```bash
+   export SONAR_TOKEN=your-token-here
+   ```
+3. Run: `./gradlew sonar`
 
-For development, you can use the default values. For production, set these environment variables:
+**Note:** The organization key is already configured in `build.gradle` (it's public). Only the token needs to be set per user.
 
+### Clever Cloud Deployment
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed Clever Cloud deployment instructions.
+
+**Quick Steps:**
+1. Create Clever Cloud application
+2. Connect Git repository
+3. Add PostgreSQL addon
+4. Configure environment variables (see `application-prod.yml` for required variables)
+5. Deploy
+
+### Docker Deployment
 ```bash
-# Required for production
-export JWT_SECRET=your_jwt_secret_key 
-export DB_URL=jdbc:mysql://localhost:3306/waterlevel
-export DB_USERNAME=your_db_username
-export DB_PASSWORD=your_db_password
-export H2_CONSOLE_ENABLED=false
-export SPRING_PROFILES_ACTIVE=prod
+# Build Docker image
+docker build -t water-level-backend .
 
-# Optional
-export JWT_EXPIRATION=86400000
-export SERVER_PORT=8080
+# Run container
+docker run -p 8080:8080 \
+  -e DB_URL=jdbc:postgresql://host:5432/db \
+  -e DB_USERNAME=user \
+  -e DB_PASSWORD=pass \
+  -e JWT_SECRET=your_secret \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  water-level-backend
 ```
 
-**See [env-setup.md](env-setup.md) for detailed setup instructions.**
-
-**Note:** Copy `env.example` to `.env` and fill in your values (`.env` is gitignored).
+### Environment Variables Setup
+1. For local development: Set `JWT_SECRET` (see `application-dev.yml` for other defaults)
+2. For production: Set all required environment variables in your deployment platform (see `application-prod.yml` for requirements)
 
 ## 🤝 Contributing
 
@@ -211,9 +316,25 @@ docs(readme): update installation instructions
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 📖 Additional Documentation
+
+- **[MQTT_SETUP.md](MQTT_SETUP.md)** - MQTT broker setup and configuration guide
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide for Clever Cloud
+- **[Postman Collection](postman/)** - API testing collection
+
+## 🔐 Security Best Practices
+
+1. **Never commit secrets**: Use environment variables for all sensitive data
+2. **Strong JWT secret**: Generate with `openssl rand -hex 32`
+3. **HTTPS in production**: Always use TLS/SSL for production deployments
+4. **MQTT authentication**: Use username/password for MQTT broker in production
+5. **Database security**: Use strong passwords and restrict database access
+6. **CORS configuration**: Restrict allowed origins in production
+
 ## 📞 Support
 
 For support and questions:
 - Create an issue in the repository
 - Check the [tutorial.md](tutorial.md) for detailed guides
 - Review API documentation at `/swagger-ui.html`
+- Check [MQTT_SETUP.md](MQTT_SETUP.md) for MQTT configuration help

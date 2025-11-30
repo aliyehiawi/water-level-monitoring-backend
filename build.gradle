@@ -47,6 +47,12 @@ dependencies {
 	implementation 'org.springframework.integration:spring-integration-mqtt'
 	implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
 
+	// Rate Limiting
+	implementation 'com.bucket4j:bucket4j-core:8.7.0'
+	
+	// Caching (for rate limiting with TTL)
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
@@ -95,13 +101,34 @@ jacocoTestReport {
 sonar {
 	properties {
 		property "sonar.projectKey", "water-level-monitoring-backend"
-		property "sonar.organization", System.getenv("SONAR_ORGANIZATION") ?: "7aee3e3412f954b73f1f674253035362e9e431bf"
+		property "sonar.projectName", "Water Level Monitoring Backend"
 		property "sonar.host.url", "https://sonarcloud.io"
+		
+		// Organization key (public - safe to commit)
+		// This identifies which SonarCloud organization the project belongs to
+		property "sonar.organization", "aliyahyaoui"
+		
+		// Token (secret - must be set via SONAR_TOKEN environment variable)
+		// Each user needs to set their own token: export SONAR_TOKEN=your-token
+		def sonarToken = System.getenv("SONAR_TOKEN")
+		if (sonarToken) {
+			property "sonar.token", sonarToken
+		}
+		
 		property "sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml"
 		property "sonar.gradle.skipCompile", "true"
 		property "sonar.java.source", "21"
 		property "sonar.java.checkstyle.reportPaths", "${layout.buildDirectory.get()}/reports/checkstyle/main.xml"
+		property "sonar.sources", "src/main/java"
+		property "sonar.tests", "src/test/java"
+		property "sonar.exclusions", "**/generated/**,**/build/**,**/*.gradle,**/gradlew*"
+		property "sonar.test.exclusions", "**/*Test.java,**/*Tests.java"
 	}
+}
+
+// Make sonar depend on checkstyle and test to ensure reports exist
+tasks.named('sonar') {
+	dependsOn checkstyleMain, test, jacocoTestReport
 }
 
 // Custom tasks
