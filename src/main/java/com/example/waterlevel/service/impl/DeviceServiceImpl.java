@@ -125,7 +125,10 @@ public class DeviceServiceImpl implements DeviceService {
   @Transactional(readOnly = true)
   public Device validateDeviceOwnership(final Long deviceId, final Long adminId) {
     LOGGER.debug("Validating device ownership: deviceId={}, adminId={}", deviceId, adminId);
-    Device device = getDeviceById(deviceId);
+    Device device =
+        deviceRepository
+            .findById(deviceId)
+            .orElseThrow(() -> new IllegalArgumentException("Device not found"));
     if (device.getAdmin() == null || !device.getAdmin().getId().equals(adminId)) {
       LOGGER.warn("Device ownership validation failed: deviceId={}, adminId={}", deviceId, adminId);
       throw new IllegalArgumentException(
@@ -167,7 +170,10 @@ public class DeviceServiceImpl implements DeviceService {
   @Transactional
   public void deleteDevice(final Long deviceId) {
     LOGGER.info("Deleting device ID: {}", deviceId);
-    Device device = getDeviceById(deviceId);
+    Device device =
+        deviceRepository
+            .findById(deviceId)
+            .orElseThrow(() -> new IllegalArgumentException("Device not found"));
 
     // Delete all associated water level data first
     waterLevelDataRepository.deleteByDevice(device);

@@ -38,22 +38,21 @@ public class OpenApiConfig {
             new Info()
                 .title("Water Level Monitoring Backend API")
                 .description(
-                    "A comprehensive backend system for monitoring water levels with automated"
-                        + " pump control, user management, and real-time data monitoring."
-                        + "\n\n"
-                        + "## Features\n"
-                        + "- User Management: Registration, authentication, and role-based access"
-                        + " control (USER/ADMIN)\n"
-                        + "- Device Management: Device registration with secure key-based"
-                        + " authentication\n"
-                        + "- Real-time Monitoring: WebSocket-based live data streaming\n"
-                        + "- Automated Control: Threshold-based pump automation\n"
-                        + "- Manual Control: Admin override for pump operations\n"
-                        + "\n"
-                        + "## Authentication\n"
-                        + "Most endpoints require JWT authentication. Register or login to get a"
-                        + " token, then include it in the Authorization header as: `Bearer"
-                        + " <token>`")
+                    """
+                    A comprehensive backend system for monitoring water levels with automated
+                    pump control, user management, and real-time data monitoring.
+
+                    ## Features
+                    - User Management: Registration, authentication, and role-based access control (USER/ADMIN)
+                    - Device Management: Device registration with secure key-based authentication
+                    - Real-time Monitoring: WebSocket-based live data streaming
+                    - Automated Control: Threshold-based pump automation
+                    - Manual Control: Admin override for pump operations
+
+                    ## Authentication
+                    Most endpoints require JWT authentication. Register or login to get a token,
+                    then include it in the Authorization header as: `Bearer <token>`
+                    """)
                 .version("1.0.0")
                 .contact(
                     new Contact()
