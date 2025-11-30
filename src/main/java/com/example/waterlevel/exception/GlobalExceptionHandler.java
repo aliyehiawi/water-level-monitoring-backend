@@ -22,6 +22,8 @@ public class GlobalExceptionHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+  private static final String USER_NOT_FOUND_MESSAGE = "User not found";
+
   /**
    * Handles validation errors.
    *
@@ -82,7 +84,8 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(
       final UsernameNotFoundException ex) {
     LOGGER.warn("Username not found error: {}", ex.getMessage());
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("User not found"));
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(new ErrorResponse(USER_NOT_FOUND_MESSAGE));
   }
 
   /**
@@ -174,8 +177,8 @@ public class GlobalExceptionHandler {
 
     // Generic replacements for common patterns
     sanitized = sanitized.replaceAll("Device not found:.*", "Device not found");
-    sanitized = sanitized.replaceAll("User not found:.*", "User not found");
-    sanitized = sanitized.replaceAll("Admin user not found:.*", "User not found");
+    sanitized = sanitized.replaceAll("User not found:.*", USER_NOT_FOUND_MESSAGE);
+    sanitized = sanitized.replaceAll("Admin user not found:.*", USER_NOT_FOUND_MESSAGE);
     sanitized = sanitized.replaceAll("Device not found for key:.*", "Device not found");
 
     return sanitized.trim();

@@ -29,6 +29,10 @@ public class SensorDataServiceImpl implements SensorDataService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SensorDataServiceImpl.class);
 
+  private static final String DEVICE_KEY_FIELD = "device_key";
+  private static final String WATER_LEVEL_FIELD = "water_level";
+  private static final String PUMP_STATUS_FIELD = "pump_status";
+
   private final DeviceRepository deviceRepository;
   private final WaterLevelDataRepository waterLevelDataRepository;
   private final WebSocketService webSocketService;
@@ -64,86 +68,30 @@ public class SensorDataServiceImpl implements SensorDataService {
       JsonNode jsonNode = objectMapper.readTree(payload);
 
       // Validate required fields exist
-      if (!jsonNode.has("device_key")) {
-        throw new IllegalArgumentException("Missing device_key in MQTT message");
-      }
-      if (!jsonNode.has("water_level")) {
-        throw new IllegalArgumentException("Missing water_level in MQTT message");
-      }
-      if (!jsonNode.has("pump_status")) {
-        throw new IllegalArgumentException("Missing pump_status in MQTT message");
-      }
+      validateRequiredFields(jsonNode);
 
       // Extract and validate device_key
-      String deviceKeyRaw =
-          jsonNode.get("device_key").isNull() ? null : jsonNode.get("device_key").asText();
-      if (deviceKeyRaw == null || deviceKeyRaw.trim().isEmpty()) {
-        throw new IllegalArgumentException("Missing or empty device_key in MQTT message");
-      }
-      final String deviceKey = deviceKeyRaw.trim();
+      final String deviceKey = extractAndValidateDeviceKey(jsonNode);
 
       // Extract and validate water level
-      if (jsonNode.get("water_level").isNull()) {
-        throw new IllegalArgumentException("Missing or null water_level in MQTT message");
-      }
-      Double waterLevel = jsonNode.get("water_level").asDouble();
+      Double waterLevel = extractAndValidateWaterLevel(jsonNode);
 
       // Extract and validate pump_status
-      String pumpStatusRaw =
-          jsonNode.get("pump_status").isNull() ? null : jsonNode.get("pump_status").asText();
-      if (pumpStatusRaw == null || pumpStatusRaw.trim().isEmpty()) {
-        throw new IllegalArgumentException("Missing or empty pump_status in MQTT message");
-      }
-      final String pumpStatus = pumpStatusRaw.trim();
-      String timestampStr = jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : null;
+      final String pumpStatus = extractAndValidatePumpStatus(jsonNode);
+      String timestampStr = extractTimestamp(jsonNode);
 
-      // Validate water level is not NaN or Infinity
-      if (Double.isNaN(waterLevel) || Double.isInfinite(waterLevel)) {
-        throw new IllegalArgumentException("Water level cannot be NaN or Infinity");
-      }
+      // Validate water level
+      validateWaterLevel(waterLevel);
 
-      // Validate water level range
-      if (waterLevel < ApplicationConstants.MIN_WATER_LEVEL
-          || waterLevel > ApplicationConstants.MAX_WATER_LEVEL) {
-        throw new IllegalArgumentException("Water level out of valid range");
-      }
+      // Validate and convert pump status (before database call)
+      PumpStatus pumpStatusEnum = validateAndConvertPumpStatus(pumpStatus);
 
-      // Validate and convert pump status
-      PumpStatus pumpStatusEnum = PumpStatus.fromString(pumpStatus);
-      if (pumpStatusEnum == PumpStatus.UNKNOWN && !pumpStatus.equalsIgnoreCase("UNKNOWN")) {
-        throw new IllegalArgumentException("Invalid pump status. Must be ON, OFF, or UNKNOWN");
-      }
-
-      // Validate device key format (UUID format)
-      if (deviceKey.length() != ApplicationConstants.UUID_LENGTH
-          || !deviceKey.matches(
-              "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
-        throw new IllegalArgumentException("Invalid device key format");
-      }
-
-      // Validate device exists
-      Device device =
-          deviceRepository
-              .findByDeviceKey(deviceKey)
-              .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+      // Validate device key format and existence
+      Device device = validateAndGetDevice(deviceKey);
 
       // Create and save WaterLevelData
-      WaterLevelData data = new WaterLevelData();
-      data.setDevice(device);
-      data.setWaterLevel(BigDecimal.valueOf(waterLevel));
-      data.setPumpStatus(pumpStatusEnum);
-      if (timestampStr != null) {
-        try {
-          data.setTimestamp(LocalDateTime.parse(timestampStr, DateTimeFormatter.ISO_DATE_TIME));
-        } catch (Exception e) {
-          LOGGER.warn(
-              "Invalid timestamp format in MQTT message: {}, using current time", timestampStr);
-          data.setTimestamp(LocalDateTime.now());
-        }
-      } else {
-        data.setTimestamp(LocalDateTime.now());
-      }
-      waterLevelDataRepository.save(data);
+      WaterLevelData data =
+          createAndSaveWaterLevelData(device, waterLevel, pumpStatusEnum, timestampStr);
 
       LOGGER.info(
           "Sensor data stored for device {}: water_level={}, pump_status={}",
@@ -152,19 +100,122 @@ public class SensorDataServiceImpl implements SensorDataService {
           pumpStatusEnum);
 
       // Broadcast to frontend via WebSocket
-      String timestamp = data.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME);
-      webSocketService.sendSensorUpdate(device.getId(), waterLevel, pumpStatusEnum, timestamp);
+      broadcastSensorUpdate(data, device.getId(), waterLevel, pumpStatusEnum);
 
     } catch (IllegalArgumentException e) {
       LOGGER.warn("Invalid sensor data from topic {}: {}", topic, e.getMessage());
-      // Don't re-throw validation errors - they're expected for invalid MQTT messages
     } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
       LOGGER.error("Failed to parse MQTT message JSON from topic {}: {}", topic, e.getMessage(), e);
-      // Don't re-throw JSON parsing errors - log and continue
     } catch (Exception e) {
       LOGGER.error("Unexpected error processing sensor data from topic: {}", topic, e);
-      // Re-throw unexpected errors to allow upper layers to handle critical failures
-      throw e;
+      throw new RuntimeException("Failed to process sensor data from topic: " + topic, e);
     }
+  }
+
+  private void validateRequiredFields(final JsonNode jsonNode) {
+    if (!jsonNode.has(DEVICE_KEY_FIELD)) {
+      throw new IllegalArgumentException("Missing " + DEVICE_KEY_FIELD + " in MQTT message");
+    }
+    if (!jsonNode.has(WATER_LEVEL_FIELD)) {
+      throw new IllegalArgumentException("Missing " + WATER_LEVEL_FIELD + " in MQTT message");
+    }
+    if (!jsonNode.has(PUMP_STATUS_FIELD)) {
+      throw new IllegalArgumentException("Missing " + PUMP_STATUS_FIELD + " in MQTT message");
+    }
+  }
+
+  private String extractAndValidateDeviceKey(final JsonNode jsonNode) {
+    String deviceKeyRaw =
+        jsonNode.get(DEVICE_KEY_FIELD).isNull() ? null : jsonNode.get(DEVICE_KEY_FIELD).asText();
+    if (deviceKeyRaw == null || deviceKeyRaw.trim().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Missing or empty " + DEVICE_KEY_FIELD + " in MQTT message");
+    }
+    return deviceKeyRaw.trim();
+  }
+
+  private Double extractAndValidateWaterLevel(final JsonNode jsonNode) {
+    if (jsonNode.get(WATER_LEVEL_FIELD).isNull()) {
+      throw new IllegalArgumentException(
+          "Missing or null " + WATER_LEVEL_FIELD + " in MQTT message");
+    }
+    return jsonNode.get(WATER_LEVEL_FIELD).asDouble();
+  }
+
+  private String extractAndValidatePumpStatus(final JsonNode jsonNode) {
+    String pumpStatusRaw =
+        jsonNode.get(PUMP_STATUS_FIELD).isNull() ? null : jsonNode.get(PUMP_STATUS_FIELD).asText();
+    if (pumpStatusRaw == null || pumpStatusRaw.trim().isEmpty()) {
+      throw new IllegalArgumentException(
+          "Missing or empty " + PUMP_STATUS_FIELD + " in MQTT message");
+    }
+    return pumpStatusRaw.trim();
+  }
+
+  private String extractTimestamp(final JsonNode jsonNode) {
+    return jsonNode.has("timestamp") ? jsonNode.get("timestamp").asText() : null;
+  }
+
+  private void validateWaterLevel(final Double waterLevel) {
+    if (Double.isNaN(waterLevel) || Double.isInfinite(waterLevel)) {
+      throw new IllegalArgumentException("Water level cannot be NaN or Infinity");
+    }
+    if (waterLevel < ApplicationConstants.MIN_WATER_LEVEL
+        || waterLevel > ApplicationConstants.MAX_WATER_LEVEL) {
+      throw new IllegalArgumentException("Water level out of valid range");
+    }
+  }
+
+  private PumpStatus validateAndConvertPumpStatus(final String pumpStatus) {
+    PumpStatus pumpStatusEnum = PumpStatus.fromString(pumpStatus);
+    if (pumpStatusEnum == PumpStatus.UNKNOWN && !pumpStatus.equalsIgnoreCase("UNKNOWN")) {
+      throw new IllegalArgumentException("Invalid pump status. Must be ON, OFF, or UNKNOWN");
+    }
+    return pumpStatusEnum;
+  }
+
+  private Device validateAndGetDevice(final String deviceKey) {
+    if (deviceKey.length() != ApplicationConstants.UUID_LENGTH
+        || !deviceKey.matches(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")) {
+      throw new IllegalArgumentException("Invalid device key format");
+    }
+    return deviceRepository
+        .findByDeviceKey(deviceKey)
+        .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+  }
+
+  private WaterLevelData createAndSaveWaterLevelData(
+      final Device device,
+      final Double waterLevel,
+      final PumpStatus pumpStatusEnum,
+      final String timestampStr) {
+    WaterLevelData data = new WaterLevelData();
+    data.setDevice(device);
+    data.setWaterLevel(BigDecimal.valueOf(waterLevel));
+    data.setPumpStatus(pumpStatusEnum);
+    data.setTimestamp(parseTimestamp(timestampStr));
+    return waterLevelDataRepository.save(data);
+  }
+
+  private LocalDateTime parseTimestamp(final String timestampStr) {
+    if (timestampStr == null) {
+      return LocalDateTime.now();
+    }
+    try {
+      return LocalDateTime.parse(timestampStr, DateTimeFormatter.ISO_DATE_TIME);
+    } catch (Exception e) {
+      LOGGER.warn("Invalid timestamp format in MQTT message: {}, using current time", timestampStr);
+      return LocalDateTime.now();
+    }
+  }
+
+  private void broadcastSensorUpdate(
+      final WaterLevelData data,
+      final Long deviceId,
+      final Double waterLevel,
+      final PumpStatus pumpStatusEnum) {
+    String timestamp = data.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME);
+    webSocketService.sendSensorUpdate(deviceId, waterLevel, pumpStatusEnum, timestamp);
   }
 }

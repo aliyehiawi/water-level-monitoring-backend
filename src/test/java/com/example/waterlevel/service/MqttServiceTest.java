@@ -1,8 +1,11 @@
 package com.example.waterlevel.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.example.waterlevel.service.impl.MqttServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,7 +81,10 @@ class MqttServiceTest {
   void publishThresholdUpdate_SerializationError_ReturnsFalse() throws Exception {
     // Arrange
     when(objectMapper.writeValueAsString(any()))
-        .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("Error") {});
+        .thenThrow(
+            new com.fasterxml.jackson.core.JsonProcessingException("Error") {
+              private static final long serialVersionUID = 1L;
+            });
 
     // Act
     boolean result = mqttService.publishThresholdUpdate("device-key", 10.0, 90.0, 1L);
