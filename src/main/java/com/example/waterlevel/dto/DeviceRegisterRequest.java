@@ -1,5 +1,7 @@
 package com.example.waterlevel.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -30,4 +32,15 @@ public class DeviceRegisterRequest {
   @DecimalMin(value = "0.0", message = "Maximum threshold must be >= 0")
   @DecimalMax(value = "999.99", message = "Maximum threshold must be <= 999.99")
   private Double maxThreshold;
+
+  /**
+   * Validates that minimum threshold is less than maximum threshold.
+   *
+   * @return true if minThreshold < maxThreshold
+   */
+  @AssertTrue(message = "Minimum threshold must be less than maximum threshold")
+  @JsonIgnore // Prevent Jackson from trying to deserialize this validation method
+  public boolean isValidThresholdRange() {
+    return minThreshold != null && maxThreshold != null && minThreshold < maxThreshold;
+  }
 }

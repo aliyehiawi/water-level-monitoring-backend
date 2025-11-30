@@ -20,10 +20,34 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
   # Security Configuration for tests
+  # Note: This is used by Spring Boot integration tests (@SpringBootTest)
+  # Unit tests use TestConstants.TEST_JWT_SECRET directly
   security:
     jwt:
-      secret: 36467a12819db4d4d16ea45254a31402
+      secret: test-jwt-secret-for-integration-tests-only-32chars
       expiration: 86400000
+
+# MQTT Configuration for tests
+# MqttConfig is disabled via mqtt.enabled=false, but properties still needed for @Value injection
+mqtt:
+  enabled: false
+  broker:
+    url: tcp://localhost:1883
+  client:
+    id: test-client
+  username: ""
+  password: ""
+  connection:
+    timeout-seconds: 30
+  keep-alive:
+    interval-seconds: 60
+  scheduler:
+    pool-size: 2
+  retry:
+    max-attempts: 1
+    initial-delay-ms: 100
+    max-delay-ms: 100
+    multiplier: 1.0
 
 # Disable logging during tests
 logging:

@@ -1,0 +1,13 @@
+{
+  "build": {
+    "type": "gradle",
+    "goal": "build -x test"
+  },
+  "deploy": {
+    "jar": "build/libs/*.jar"
+  },
+  "hooks": {
+    "postdeploy": "java -jar build/libs/*.jar --spring.profiles.active=prod"
+  }
+}
+

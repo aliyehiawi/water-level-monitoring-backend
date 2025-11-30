@@ -1,7 +1,11 @@
 package com.example.waterlevel.config;
 
+import com.example.waterlevel.constants.MqttConstants;
+import com.example.waterlevel.constants.MqttTopics;
+import java.util.UUID;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -19,12 +23,13 @@ import org.springframework.messaging.MessageHandler;
  * <p>Uses Eclipse Paho MQTT client for publishing pump commands and threshold updates.
  */
 @Configuration
+@ConditionalOnProperty(name = "mqtt.enabled", havingValue = "true", matchIfMissing = true)
 public class MqttConfig {
 
-  @Value("${mqtt.broker.url:tcp://test.mosquitto.org:1883}")
+  @Value("${mqtt.broker.url:tcp://localhost:1883}")
   private String brokerUrl;
 
-  @Value("${mqtt.client.id:water-level-backend}")
+  @Value("${mqtt.client.id:test-client}")
   private String clientId;
 
   @Value("${mqtt.username:}")
@@ -33,14 +38,24 @@ public class MqttConfig {
   @Value("${mqtt.password:}")
   private String password;
 
+  @Value(
+      "${mqtt.connection.timeout-seconds:" + MqttConstants.DEFAULT_CONNECTION_TIMEOUT_SECONDS + "}")
+  private int connectionTimeoutSeconds;
+
+  @Value(
+      "${mqtt.keep-alive.interval-seconds:"
+          + MqttConstants.DEFAULT_KEEP_ALIVE_INTERVAL_SECONDS
+          + "}")
+  private int keepAliveIntervalSeconds;
+
   @Bean
   public MqttPahoClientFactory mqttClientFactory() {
     DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
     MqttConnectOptions options = new MqttConnectOptions();
     options.setServerURIs(new String[] {brokerUrl});
     options.setCleanSession(true);
-    options.setConnectionTimeout(30);
-    options.setKeepAliveInterval(60);
+    options.setConnectionTimeout(connectionTimeoutSeconds);
+    options.setKeepAliveInterval(keepAliveIntervalSeconds);
     options.setAutomaticReconnect(true);
 
     if (username != null && !username.isEmpty()) {
@@ -64,9 +79,9 @@ public class MqttConfig {
   public MessageHandler mqttOutboundHandler() {
     MqttPahoMessageHandler messageHandler =
         new MqttPahoMessageHandler(
-            clientId + "-" + System.currentTimeMillis(), mqttClientFactory());
+            clientId + "-" + UUID.randomUUID().toString(), mqttClientFactory());
     messageHandler.setAsync(true);
-    messageHandler.setDefaultQos(1);
+    messageHandler.setDefaultQos(MqttConstants.DEFAULT_QOS_LEVEL);
     messageHandler.setConverter(new DefaultPahoMessageConverter());
     return messageHandler;
   }
@@ -77,14 +92,15 @@ public class MqttConfig {
   }
 
   @Bean
+  @ConditionalOnProperty(name = "spring.mqtt.enabled", havingValue = "true", matchIfMissing = true)
   public org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter
       mqttInboundAdapter() {
     org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter adapter =
         new org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter(
-            clientId + "-inbound-" + System.currentTimeMillis(),
+            clientId + "-inbound-" + UUID.randomUUID().toString(),
             mqttClientFactory(),
-            "devices/+/sensor/data");
-    adapter.setQos(1);
+            MqttTopics.SENSOR_DATA_PATTERN);
+    adapter.setQos(MqttConstants.DEFAULT_QOS_LEVEL);
     adapter.setOutputChannel(mqttInboundChannel());
     adapter.setConverter(new DefaultPahoMessageConverter());
     return adapter;

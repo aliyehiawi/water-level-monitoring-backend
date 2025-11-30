@@ -1,42 +1,35 @@
 package com.example.waterlevel.service;
 
 import com.example.waterlevel.entity.Device;
+import com.example.waterlevel.entity.PumpStatus;
 import com.example.waterlevel.entity.WaterLevelData;
-import com.example.waterlevel.repository.WaterLevelDataRepository;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-/** Service for pump status operations. */
-@Service
-public class PumpService {
-
-  private final WaterLevelDataRepository waterLevelDataRepository;
-
-  @Autowired
-  public PumpService(final WaterLevelDataRepository waterLevelDataRepository) {
-    this.waterLevelDataRepository = waterLevelDataRepository;
-  }
+/**
+ * Interface for pump status operations.
+ *
+ * <p>Defines the contract for retrieving pump status and water level data.
+ */
+public interface PumpService {
 
   /**
    * Gets the current pump status for a device.
    *
+   * <p>Retrieves the most recent pump status from sensor data. Returns UNKNOWN if no data is
+   * available.
+   *
    * @param device the device
-   * @return the latest pump status, or "UNKNOWN" if no data available
+   * @return the latest pump status, or UNKNOWN if no data available
    */
-  public String getCurrentPumpStatus(final Device device) {
-    Optional<WaterLevelData> latestData =
-        waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(device);
-    return latestData.map(WaterLevelData::getPumpStatus).orElse("UNKNOWN");
-  }
+  PumpStatus getCurrentPumpStatus(Device device);
 
   /**
    * Gets the latest water level data for a device.
    *
+   * <p>Retrieves the most recent sensor reading for the specified device.
+   *
    * @param device the device
    * @return the latest water level data, or empty if none available
    */
-  public Optional<WaterLevelData> getLatestData(final Device device) {
-    return waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(device);
-  }
+  Optional<WaterLevelData> getLatestData(Device device);
 }
