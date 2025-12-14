@@ -56,7 +56,7 @@ class PumpControllerTest {
     when(mqttService.publishPumpStartCommand(anyString(), anyLong())).thenReturn(true);
 
     // Act & Assert
-    mockMvc.perform(post("/api/devices/1/pump/start")).andExpect(status().isOk());
+    mockMvc.perform(post("/devices/1/pump/start")).andExpect(status().isOk());
 
     verify(mqttService).publishPumpStartCommand("test-key", 1L);
   }
@@ -78,7 +78,7 @@ class PumpControllerTest {
     when(mqttService.publishPumpStartCommand(anyString(), anyLong())).thenReturn(false);
 
     // Act & Assert
-    mockMvc.perform(post("/api/devices/1/pump/start")).andExpect(status().isInternalServerError());
+    mockMvc.perform(post("/devices/1/pump/start")).andExpect(status().isInternalServerError());
   }
 
   @Test
@@ -102,7 +102,7 @@ class PumpControllerTest {
 
     // Act & Assert
     mockMvc
-        .perform(get("/api/devices/1/pump/status"))
+        .perform(get("/devices/1/pump/status"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.pumpStatus").value("ON"));
   }

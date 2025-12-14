@@ -1,6 +1,6 @@
 package com.example.waterlevel.dto;
 
-import com.example.waterlevel.entity.User;
+import com.example.waterlevel.entity.Role;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +17,6 @@ public class UserResponse {
   private Long id;
   private String username;
   private String email;
-  private User.Role role;
+  private Role role;
   private LocalDateTime createdAt;
 }

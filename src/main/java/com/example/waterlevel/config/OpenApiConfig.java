@@ -10,11 +10,16 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /** OpenAPI/Swagger configuration for API documentation. */
 @Configuration
+@ConditionalOnProperty(
+    name = "springdoc.swagger-ui.enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 public class OpenApiConfig {
 
   @Value("${server.servlet.context-path:/api}")

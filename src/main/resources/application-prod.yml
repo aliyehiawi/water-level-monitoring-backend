@@ -72,9 +72,12 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BINDER:OFF}
 
 # Swagger/OpenAPI Configuration - Production
+# Swagger UI is restricted to ADMIN role only in production
 # Set SPRINGDOC_SERVER_URL to your production domain
 springdoc:
   server-url: ${SPRINGDOC_SERVER_URL:}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
   contact:
     name: ${SPRINGDOC_CONTACT_NAME:Water Level Monitoring Team}
     email: ${SPRINGDOC_CONTACT_EMAIL:}

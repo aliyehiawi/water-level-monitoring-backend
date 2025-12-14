@@ -3,6 +3,7 @@ package com.example.waterlevel.service.impl;
 import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
 import com.example.waterlevel.dto.UserResponse;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuditService;
@@ -55,42 +56,36 @@ public class AuthServiceImpl implements AuthService {
   public AuthResponse register(final AuthRequest request) {
     LOGGER.debug("Registering new user: {}", request.getUsername());
 
-    // Validate email is provided for registration
     if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
       LOGGER.warn("Registration failed: email is required");
       throw new IllegalArgumentException("Email is required");
     }
 
-    // Check if username already exists
     if (userRepository.existsByUsername(request.getUsername())) {
       LOGGER.warn("Registration failed: username already exists - {}", request.getUsername());
       throw new IllegalArgumentException("Username already exists");
     }
 
-    // Check if email already exists
     if (userRepository.existsByEmail(request.getEmail())) {
       LOGGER.warn("Registration failed: email already exists - {}", request.getEmail());
       throw new IllegalArgumentException("Email already exists");
     }
 
-    // Create new user
     User user = new User();
     user.setUsername(request.getUsername());
     user.setEmail(request.getEmail());
     user.setPassword(passwordEncoder.encode(request.getPassword()));
-    user.setRole(User.Role.USER);
+    user.setRole(Role.USER);
 
     User savedUser = userRepository.save(user);
     LOGGER.info(
         "User registered successfully: {} (ID: {})", savedUser.getUsername(), savedUser.getId());
     auditService.logUserRegistration(savedUser.getId(), savedUser.getUsername());
 
-    // Generate JWT token
     String token =
         jwtUtil.generateToken(
             savedUser.getUsername(), savedUser.getRole().name(), savedUser.getId());
 
-    // Build response
     UserResponse userResponse =
         new UserResponse(
             savedUser.getId(),
@@ -124,10 +119,8 @@ public class AuthServiceImpl implements AuthService {
 
     LOGGER.info("User logged in successfully: {} (ID: {})", user.getUsername(), user.getId());
 
-    // Generate JWT token
     String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name(), user.getId());
 
-    // Build response
     UserResponse userResponse =
         new UserResponse(
             user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.getCreatedAt());

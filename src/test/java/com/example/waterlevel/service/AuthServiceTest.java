@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.impl.AuthServiceImpl;
@@ -50,7 +51,7 @@ class AuthServiceTest {
     testUser.setUsername("testuser");
     testUser.setEmail("test@example.com");
     testUser.setPassword("encodedPassword");
-    testUser.setRole(User.Role.USER);
+    testUser.setRole(Role.USER);
 
     authRequest = new AuthRequest();
     authRequest.setUsername("testuser");

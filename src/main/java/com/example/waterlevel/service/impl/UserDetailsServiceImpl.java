@@ -1,4 +1,4 @@
-package com.example.waterlevel.service;
+package com.example.waterlevel.service.impl;
 
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;

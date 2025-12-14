@@ -2,11 +2,8 @@ package com.example.waterlevel.controller;
 
 import com.example.waterlevel.dto.UserResponse;
 import com.example.waterlevel.entity.User;
-import com.example.waterlevel.repository.DeviceRepository;
-import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuditService;
 import com.example.waterlevel.service.UserService;
-import com.example.waterlevel.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,25 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller for user management endpoints (admin only). */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "User Management", description = "Admin operations for managing users")
 public class UserController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
-  private final UserRepository userRepository;
-  private final DeviceRepository deviceRepository;
   private final AuditService auditService;
   private final UserService userService;
 
-  public UserController(
-      final UserRepository userRepository,
-      final DeviceRepository deviceRepository,
-      final AuditService auditService,
-      final UserService userService) {
-    this.userRepository = userRepository;
-    this.deviceRepository = deviceRepository;
+  public UserController(final AuditService auditService, final UserService userService) {
     this.auditService = auditService;
     this.userService = userService;
   }
@@ -74,16 +63,7 @@ public class UserController {
           final int size) {
     LOGGER.debug("Get all users requested: page={}, size={}", page, size);
     Pageable pageable = PageRequest.of(page, size);
-    Page<User> users = userRepository.findAll(pageable);
-    Page<UserResponse> responses =
-        users.map(
-            user ->
-                new UserResponse(
-                    user.getId(),
-                    user.getUsername(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getCreatedAt()));
+    Page<UserResponse> responses = userService.getAllUsers(pageable);
     LOGGER.debug("Returning {} users (page {})", responses.getNumberOfElements(), page);
     return ResponseEntity.ok(responses);
   }
@@ -105,11 +85,7 @@ public class UserController {
   public ResponseEntity<UserResponse> promoteUser(
       @Parameter(description = "User ID", example = "2") @PathVariable final Long id) {
     LOGGER.info("User promotion request for userId: {}", id);
-    String adminUsername = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(adminUsername)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    User admin = userService.getCurrentUser();
 
     User updatedUser = userService.promoteUser(id);
     auditService.logUserPromotion(admin.getId(), updatedUser.getId(), updatedUser.getUsername());
@@ -140,25 +116,9 @@ public class UserController {
   public ResponseEntity<Void> deleteUser(
       @Parameter(description = "User ID", example = "3") @PathVariable final Long id) {
     LOGGER.info("User deletion request for userId: {}", id);
-    String adminUsername = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(adminUsername)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    User admin = userService.getCurrentUser();
 
-    // Prevent deletion if user owns devices
-    if (deviceRepository.existsByAdminId(id)) {
-      LOGGER.warn("User deletion failed: user owns devices - {}", id);
-      throw new IllegalArgumentException("Cannot delete user: user owns one or more devices");
-    }
-
-    if (!userRepository.existsById(id)) {
-      LOGGER.warn("User deletion failed: user not found - userId={}", id);
-      throw new IllegalArgumentException("User not found");
-    }
-
-    userRepository.deleteById(id);
-    LOGGER.info("User deleted successfully: {}", id);
+    userService.deleteUser(id);
     auditService.logUserDeletion(admin.getId(), id);
     return ResponseEntity.noContent().build();
   }

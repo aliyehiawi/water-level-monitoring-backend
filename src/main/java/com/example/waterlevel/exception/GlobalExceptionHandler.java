@@ -159,29 +159,39 @@ public class GlobalExceptionHandler {
     // Remove specific IDs, device keys, and other sensitive information
     String sanitized = message;
 
-    // Remove device keys (UUID format)
     sanitized =
         sanitized.replaceAll(
             "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
             "[device_key]");
 
-    // Remove numeric IDs in error messages
     sanitized = sanitized.replaceAll("\\b\\d+\\b", "[id]");
 
-    // Remove specific patterns that reveal internal details
     sanitized = sanitized.replaceAll("for key:.*", "for device");
     sanitized = sanitized.replaceAll("with id:.*", "");
     sanitized = sanitized.replaceAll("userId=.*", "userId=[id]");
     sanitized = sanitized.replaceAll("deviceId=.*", "deviceId=[id]");
     sanitized = sanitized.replaceAll("adminId=.*", "adminId=[id]");
 
-    // Generic replacements for common patterns
     sanitized = sanitized.replaceAll("Device not found:.*", "Device not found");
     sanitized = sanitized.replaceAll("User not found:.*", USER_NOT_FOUND_MESSAGE);
     sanitized = sanitized.replaceAll("Admin user not found:.*", USER_NOT_FOUND_MESSAGE);
     sanitized = sanitized.replaceAll("Device not found for key:.*", "Device not found");
 
     return sanitized.trim();
+  }
+
+  /**
+   * Handles sensor data processing exceptions.
+   *
+   * @param ex the exception
+   * @return error response
+   */
+  @ExceptionHandler(SensorDataProcessingException.class)
+  public ResponseEntity<ErrorResponse> handleSensorDataProcessingException(
+      final SensorDataProcessingException ex) {
+    LOGGER.error("Sensor data processing error: {}", ex.getMessage(), ex);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(new ErrorResponse("Failed to process sensor data. Please try again later."));
   }
 
   /**

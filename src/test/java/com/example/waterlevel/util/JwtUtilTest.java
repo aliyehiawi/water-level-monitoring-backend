@@ -5,21 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.example.waterlevel.constants.TestConstants;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
+@SpringBootTest
+@ActiveProfiles("test")
 class JwtUtilTest {
 
-  private JwtUtil jwtUtil;
+  @Autowired private JwtUtil jwtUtil;
 
-  @BeforeEach
-  void setUp() {
-    jwtUtil = new JwtUtil();
-    ReflectionTestUtils.setField(jwtUtil, "secret", TestConstants.TEST_JWT_SECRET);
-    ReflectionTestUtils.setField(jwtUtil, "expiration", TestConstants.TEST_JWT_EXPIRATION);
-  }
+  @Value("${spring.security.jwt.expiration}")
+  private Long testJwtExpiration;
 
   @Test
   void generateToken_Success() {
@@ -94,6 +93,6 @@ class JwtUtilTest {
     Long expiration = jwtUtil.getExpiration();
 
     // Assert
-    assertEquals(TestConstants.TEST_JWT_EXPIRATION, expiration);
+    assertEquals(testJwtExpiration, expiration);
   }
 }

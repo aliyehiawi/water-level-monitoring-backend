@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,6 +29,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -66,13 +68,13 @@ class DeviceControllerTest {
     device.setCreatedAt(LocalDateTime.now());
     device.setUpdatedAt(LocalDateTime.now());
 
-    when(userRepository.findByUsername("admin")).thenReturn(java.util.Optional.of(admin));
+    when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(deviceService.registerDevice(any(), any())).thenReturn(device);
 
     // Act & Assert
     mockMvc
         .perform(
-            post("/api/devices/register")
+            post("/devices/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -96,12 +98,11 @@ class DeviceControllerTest {
     device.setCreatedAt(LocalDateTime.now());
     List<Device> devices = Arrays.asList(device);
     Page<Device> devicePage = new PageImpl<>(devices, PageRequest.of(0, 20), 1);
-    when(deviceService.getAllDevices(any(org.springframework.data.domain.Pageable.class)))
-        .thenReturn(devicePage);
+    when(deviceService.getAllDevices(any(Pageable.class))).thenReturn(devicePage);
 
     // Act & Assert
     mockMvc
-        .perform(get("/api/devices"))
+        .perform(get("/devices"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].name").value("Test Device"));
   }
@@ -117,12 +118,11 @@ class DeviceControllerTest {
     device.setId(1L);
     device.setAdmin(admin);
 
-    when(userRepository.findByUsername("admin")).thenReturn(java.util.Optional.of(admin));
+    when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
-    // deleteDevice returns void, so no need to mock return value
 
     // Act & Assert
-    mockMvc.perform(delete("/api/devices/1")).andExpect(status().isNoContent());
+    mockMvc.perform(delete("/devices/1")).andExpect(status().isNoContent());
 
     verify(deviceService).deleteDevice(1L);
   }

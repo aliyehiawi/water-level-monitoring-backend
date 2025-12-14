@@ -49,9 +49,4 @@ public class User {
       createdAt = LocalDateTime.now();
     }
   }
-
-  public enum Role {
-    USER,
-    ADMIN
-  }
 }

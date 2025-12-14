@@ -4,8 +4,8 @@ import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
 import com.example.waterlevel.dto.UserResponse;
 import com.example.waterlevel.entity.User;
-import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuthService;
+import com.example.waterlevel.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,18 +24,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller for authentication endpoints (register, login, get current user). */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
   private final AuthService authService;
-  private final UserRepository userRepository;
+  private final UserService userService;
 
-  public AuthController(final AuthService authService, final UserRepository userRepository) {
+  public AuthController(final AuthService authService, final UserService userService) {
     this.authService = authService;
-    this.userRepository = userRepository;
+    this.userService = userService;
   }
 
   /**
@@ -102,10 +101,7 @@ public class AuthController {
     }
 
     LOGGER.debug("Get current user requested for: {}", authentication.getName());
-    User user =
-        userRepository
-            .findByUsername(authentication.getName())
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    User user = userService.getCurrentUser();
 
     UserResponse response =
         new UserResponse(

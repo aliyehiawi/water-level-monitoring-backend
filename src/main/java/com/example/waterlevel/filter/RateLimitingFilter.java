@@ -8,6 +8,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,11 +42,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   @Value("${rate.limit.cache-max-size:" + RateLimitConstants.DEFAULT_CACHE_MAX_SIZE + "}")
   private int cacheMaxSize;
 
-  private final Cache<String, Bucket> buckets;
+  private Cache<String, Bucket> buckets;
   private final ObjectMapper objectMapper;
 
   public RateLimitingFilter(final ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
+  }
+
+  @PostConstruct
+  public void init() {
     this.buckets =
         Caffeine.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(RateLimitConstants.BUCKET_EXPIRATION_MINUTES))
@@ -60,9 +65,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
       final FilterChain filterChain)
       throws ServletException, IOException {
 
-    // Skip rate limiting for actuator endpoints
-    String path = request.getRequestURI();
-    if (path.startsWith("/api/actuator") || path.startsWith("/api/h2-console")) {
+    String path = request.getServletPath();
+    if (path != null && (path.startsWith("/actuator") || path.startsWith("/h2-console"))) {
       filterChain.doFilter(request, response);
       return;
     }

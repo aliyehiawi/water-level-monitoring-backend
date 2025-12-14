@@ -64,7 +64,7 @@ class ThresholdControllerTest {
 
     // Act & Assert
     mockMvc
-        .perform(get("/api/devices/1/thresholds"))
+        .perform(get("/devices/1/thresholds"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.minThreshold").value(10.0))
         .andExpect(jsonPath("$.maxThreshold").value(90.0));
@@ -112,7 +112,7 @@ class ThresholdControllerTest {
     // Act & Assert
     mockMvc
         .perform(
-            put("/api/devices/1/thresholds")
+            put("/devices/1/thresholds")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -144,7 +144,7 @@ class ThresholdControllerTest {
     // Act & Assert
     mockMvc
         .perform(
-            put("/api/devices/1/thresholds")
+            put("/devices/1/thresholds")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
