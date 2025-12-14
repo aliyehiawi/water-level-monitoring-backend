@@ -121,12 +121,10 @@ The application uses **Spring Boot profiles** for configuration management:
 
 **Development:**
 ```bash
-# Uses application-dev.yml automatically
+# Uses 'dev' profile automatically (default)
 ./gradlew bootRun
 
-# Or explicitly set profile
-export SPRING_PROFILES_ACTIVE=dev
-./gradlew bootRun
+# No need to manually set profile - dev is the default for local development
 ```
 
 **Production:**
@@ -141,7 +139,7 @@ java -jar app.jar
 **Required (Secrets - must be set in all environments):**
 - `JWT_SECRET` - Generate with: `openssl rand -hex 32`
 
-**Required (Production only - set via deployment platform):**
+**Optional (for production-like local testing):**
 - `DB_URL` - Database connection URL (e.g., `jdbc:postgresql://host:5432/db`)
 - `DB_USERNAME` - Database username
 - `DB_PASSWORD` - Database password
@@ -164,33 +162,32 @@ The `dev` profile (`application-dev.yml`) includes:
 - H2 in-memory database (default)
 - H2 console enabled
 - Debug logging
-- Public MQTT test broker (`test.mosquitto.org`)
+- Local MQTT broker (defaults to `tcp://localhost:1883`)
 - Localhost CORS origins
 
 **To run locally:**
 1. Set `JWT_SECRET` environment variable (required)
 2. Optionally set `MQTT_BROKER_URL` if you want a different broker
-3. Run: `./gradlew bootRun` (uses `dev` profile by default)
+3. Run: `./gradlew bootRun` (automatically uses `dev` profile - no manual selection needed)
 
 ### Production Configuration
 
-The `prod` profile (`application-prod.yml`) requires:
+The `prod` profile (`application-prod.yml`) is available for production-like local testing:
 - PostgreSQL database (via `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`)
 - Production MQTT broker (via `MQTT_BROKER_URL`, `MQTT_CLIENT_ID`)
 - Production CORS origins (via `CORS_ALLOWED_ORIGINS`)
 - All secrets via environment variables
 
-**To deploy:**
-1. Set all required environment variables in your deployment platform
+**To run with prod profile locally:**
+1. Set all required environment variables
 2. Set `SPRING_PROFILES_ACTIVE=prod`
-3. Deploy the application
+3. Run: `./gradlew bootRun`
 
 ### MQTT Configuration
 
 See [MQTT_SETUP.md](MQTT_SETUP.md) for detailed setup instructions.
 
-**Development:** Uses public test broker (`test.mosquitto.org`) by default  
-**Production:** Configure your own MQTT broker (HiveMQ Cloud, self-hosted Mosquitto, etc.)
+**Development:** Uses local Mosquitto broker (`tcp://localhost:1883`) by default. See [MQTT_SETUP.md](MQTT_SETUP.md) for installation and setup instructions.
 
 ### Logging
 Comprehensive logging is configured:
@@ -247,9 +244,8 @@ Import the Postman collection for manual API testing:
 ./gradlew test
 ```
 
-## 🚀 Deployment
+## 🚀 CI/CD Pipeline
 
-### CI/CD Pipeline
 The GitHub Actions workflow automatically:
 1. Code formatting validation (`spotlessCheck`)
 2. Static analysis (`checkstyle`)
@@ -266,35 +262,6 @@ The GitHub Actions workflow automatically:
 3. Run: `./gradlew sonar`
 
 **Note:** The organization key is already configured in `build.gradle` (it's public). Only the token needs to be set per user.
-
-### Clever Cloud Deployment
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed Clever Cloud deployment instructions.
-
-**Quick Steps:**
-1. Create Clever Cloud application
-2. Connect Git repository
-3. Add PostgreSQL addon
-4. Configure environment variables (see `application-prod.yml` for required variables)
-5. Deploy
-
-### Docker Deployment
-```bash
-# Build Docker image
-docker build -t water-level-backend .
-
-# Run container
-docker run -p 8080:8080 \
-  -e DB_URL=jdbc:postgresql://host:5432/db \
-  -e DB_USERNAME=user \
-  -e DB_PASSWORD=pass \
-  -e JWT_SECRET=your_secret \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  water-level-backend
-```
-
-### Environment Variables Setup
-1. For local development: Set `JWT_SECRET` (see `application-dev.yml` for other defaults)
-2. For production: Set all required environment variables in your deployment platform (see `application-prod.yml` for requirements)
 
 ## 🤝 Contributing
 
@@ -319,17 +286,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📖 Additional Documentation
 
 - **[MQTT_SETUP.md](MQTT_SETUP.md)** - MQTT broker setup and configuration guide
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide for Clever Cloud
+- **[tutorial.md](tutorial.md)** - Step-by-step tutorial and guides
 - **[Postman Collection](postman/)** - API testing collection
 
 ## 🔐 Security Best Practices
 
 1. **Never commit secrets**: Use environment variables for all sensitive data
 2. **Strong JWT secret**: Generate with `openssl rand -hex 32`
-3. **HTTPS in production**: Always use TLS/SSL for production deployments
-4. **MQTT authentication**: Use username/password for MQTT broker in production
-5. **Database security**: Use strong passwords and restrict database access
-6. **CORS configuration**: Restrict allowed origins in production
+3. **MQTT authentication**: Use username/password for MQTT broker when connecting to external brokers
+4. **Database security**: Use strong passwords and restrict database access
+5. **CORS configuration**: Restrict allowed origins appropriately
 
 ## 📞 Support
 

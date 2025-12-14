@@ -1,5 +1,6 @@
 package com.example.waterlevel.service.impl;
 
+import com.example.waterlevel.constants.ApplicationConstants;
 import com.example.waterlevel.dto.DeviceRegisterRequest;
 import com.example.waterlevel.entity.Device;
 import com.example.waterlevel.entity.User;
@@ -52,10 +53,8 @@ public class DeviceServiceImpl implements DeviceService {
             .findById(adminId)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-    // Generate unique device key
     String deviceKey = UUID.randomUUID().toString();
 
-    // Create device
     Device device = new Device();
     device.setName(request.getName());
     device.setDeviceKey(deviceKey);
@@ -94,8 +93,6 @@ public class DeviceServiceImpl implements DeviceService {
   @Override
   @Transactional(readOnly = true)
   public Page<Device> getAllDevices(final Pageable pageable) {
-    // Note: findAll with EntityGraph requires custom query or specification
-    // For now, using findAll and relying on batch fetching configuration
     return deviceRepository.findAll(pageable);
   }
 
@@ -110,7 +107,8 @@ public class DeviceServiceImpl implements DeviceService {
   public Device getDeviceById(final Long deviceId) {
     return deviceRepository
         .findById(deviceId)
-        .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+        .orElseThrow(
+            () -> new IllegalArgumentException(ApplicationConstants.DEVICE_NOT_FOUND_MESSAGE));
   }
 
   /**
@@ -128,7 +126,8 @@ public class DeviceServiceImpl implements DeviceService {
     Device device =
         deviceRepository
             .findById(deviceId)
-            .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+            .orElseThrow(
+                () -> new IllegalArgumentException(ApplicationConstants.DEVICE_NOT_FOUND_MESSAGE));
     if (device.getAdmin() == null || !device.getAdmin().getId().equals(adminId)) {
       LOGGER.warn("Device ownership validation failed: deviceId={}, adminId={}", deviceId, adminId);
       throw new IllegalArgumentException(
@@ -173,9 +172,9 @@ public class DeviceServiceImpl implements DeviceService {
     Device device =
         deviceRepository
             .findById(deviceId)
-            .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+            .orElseThrow(
+                () -> new IllegalArgumentException(ApplicationConstants.DEVICE_NOT_FOUND_MESSAGE));
 
-    // Delete all associated water level data first
     waterLevelDataRepository.deleteByDevice(device);
     LOGGER.debug("Deleted water level data for device ID: {}", deviceId);
 

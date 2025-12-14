@@ -10,11 +10,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
 import com.example.waterlevel.dto.UserResponse;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,7 +48,7 @@ class AuthControllerTest {
     request.setPassword("password123");
 
     UserResponse userResponse =
-        new UserResponse(1L, "testuser", "test@example.com", User.Role.USER, LocalDateTime.now());
+        new UserResponse(1L, "testuser", "test@example.com", Role.USER, LocalDateTime.now());
     AuthResponse authResponse = new AuthResponse("testToken", 86400L, userResponse);
 
     when(authService.register(any(AuthRequest.class))).thenReturn(authResponse);
@@ -54,7 +56,7 @@ class AuthControllerTest {
     // Act & Assert
     mockMvc
         .perform(
-            post("/api/auth/register")
+            post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
@@ -71,7 +73,7 @@ class AuthControllerTest {
     // Act & Assert
     mockMvc
         .perform(
-            post("/api/auth/register")
+            post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
@@ -85,7 +87,7 @@ class AuthControllerTest {
     request.setPassword("password123");
 
     UserResponse userResponse =
-        new UserResponse(1L, "testuser", "test@example.com", User.Role.USER, LocalDateTime.now());
+        new UserResponse(1L, "testuser", "test@example.com", Role.USER, LocalDateTime.now());
     AuthResponse authResponse = new AuthResponse("testToken", 86400L, userResponse);
 
     when(authService.login(any(AuthRequest.class))).thenReturn(authResponse);
@@ -93,7 +95,7 @@ class AuthControllerTest {
     // Act & Assert
     mockMvc
         .perform(
-            post("/api/auth/login")
+            post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
@@ -109,14 +111,14 @@ class AuthControllerTest {
     user.setId(1L);
     user.setUsername("testuser");
     user.setEmail("test@example.com");
-    user.setRole(User.Role.USER);
+    user.setRole(Role.USER);
     user.setCreatedAt(LocalDateTime.now());
 
-    when(userRepository.findByUsername("testuser")).thenReturn(java.util.Optional.of(user));
+    when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
     // Act & Assert
     mockMvc
-        .perform(get("/api/auth/me"))
+        .perform(get("/auth/me"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.username").value("testuser"))
         .andExpect(jsonPath("$.email").value("test@example.com"));
@@ -125,6 +127,6 @@ class AuthControllerTest {
   @Test
   void getCurrentUser_Unauthenticated_ReturnsUnauthorized() throws Exception {
     // Act & Assert
-    mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
+    mockMvc.perform(get("/auth/me")).andExpect(status().isUnauthorized());
   }
 }

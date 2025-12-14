@@ -5,9 +5,12 @@ import com.example.waterlevel.filter.JwtAuthenticationFilter;
 import com.example.waterlevel.filter.RateLimitingFilter;
 import com.example.waterlevel.filter.RequestLoggingFilter;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -25,9 +28,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
+
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final RequestLoggingFilter requestLoggingFilter;
   private final RateLimitingFilter rateLimitingFilter;
+  private final Environment environment;
 
   @Value("${spring.websocket.allowed-origins:}")
   private String allowedOrigins;
@@ -35,34 +41,66 @@ public class SecurityConfig {
   @Value("${cors.max-age-seconds:" + SecurityConstants.DEFAULT_CORS_MAX_AGE_SECONDS + "}")
   private long corsMaxAgeSeconds;
 
+  @Value("${spring.h2.console.enabled:false}")
+  private boolean h2ConsoleEnabled;
+
+  @Value("${springdoc.swagger-ui.enabled:true}")
+  private boolean swaggerUiEnabled;
+
   public SecurityConfig(
       final JwtAuthenticationFilter jwtAuthenticationFilter,
       final RequestLoggingFilter requestLoggingFilter,
-      final RateLimitingFilter rateLimitingFilter) {
+      final RateLimitingFilter rateLimitingFilter,
+      final Environment environment) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.requestLoggingFilter = requestLoggingFilter;
     this.rateLimitingFilter = rateLimitingFilter;
+    this.environment = environment;
   }
 
   @Bean
   @SuppressWarnings("java:S112") // Spring Security API requires Exception
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+    boolean isProduction = isProductionProfile();
+
+    LOGGER.info(
+        "Security configuration - H2 Console Enabled: {}, Is Production: {}, Will Allow H2: {}",
+        h2ConsoleEnabled,
+        isProduction,
+        h2ConsoleEnabled && !isProduction);
+
     http.csrf(csrf -> csrf.disable())
+        .headers(
+            headers ->
+                headers.frameOptions(
+                    frameOptions ->
+                        frameOptions.sameOrigin())) // Allow frames for H2 console and Swagger UI
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers("/api/auth/**")
-                    .permitAll()
-                    .requestMatchers("/api/ws/**")
-                    .permitAll()
-                    .requestMatchers("/api/data/**")
-                    .permitAll()
-                    .requestMatchers("/api/users/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers("/api/devices/**")
-                    .hasRole("ADMIN")
-                    .anyRequest()
-                    .authenticated())
+            auth -> {
+              auth.requestMatchers("/auth/**").permitAll();
+              auth.requestMatchers("/ws/**").permitAll();
+
+              if (h2ConsoleEnabled && !isProduction) {
+                auth.requestMatchers("/h2-console/**").permitAll();
+              }
+
+              if (swaggerUiEnabled) {
+                if (isProduction) {
+                  auth.requestMatchers(
+                          "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
+                      .hasRole("ADMIN");
+                } else {
+                  auth.requestMatchers(
+                          "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
+                      .permitAll();
+                }
+              }
+
+              auth.requestMatchers("/users/**").hasRole("ADMIN");
+              auth.requestMatchers("/devices/**").hasRole("ADMIN");
+              auth.anyRequest().authenticated();
+            })
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
@@ -70,6 +108,19 @@ public class SecurityConfig {
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  private boolean isProductionProfile() {
+    String[] activeProfiles = environment.getActiveProfiles();
+    if (activeProfiles.length == 0) {
+      activeProfiles = environment.getDefaultProfiles();
+    }
+    for (String profile : activeProfiles) {
+      if (profile != null && (profile.contains("prod") || profile.contains("production"))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Bean
@@ -90,7 +141,7 @@ public class SecurityConfig {
     configuration.setMaxAge(corsMaxAgeSeconds);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/api/**", configuration);
+    source.registerCorsConfiguration("/**", configuration);
     return source;
   }
 

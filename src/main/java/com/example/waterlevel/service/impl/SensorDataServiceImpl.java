@@ -4,10 +4,12 @@ import com.example.waterlevel.constants.ApplicationConstants;
 import com.example.waterlevel.entity.Device;
 import com.example.waterlevel.entity.PumpStatus;
 import com.example.waterlevel.entity.WaterLevelData;
+import com.example.waterlevel.exception.SensorDataProcessingException;
 import com.example.waterlevel.repository.DeviceRepository;
 import com.example.waterlevel.repository.WaterLevelDataRepository;
 import com.example.waterlevel.service.SensorDataService;
 import com.example.waterlevel.service.WebSocketService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -64,32 +66,18 @@ public class SensorDataServiceImpl implements SensorDataService {
 
       LOGGER.debug("Received MQTT message from topic: {} with payload: {}", topic, payload);
 
-      // Parse JSON payload
       JsonNode jsonNode = objectMapper.readTree(payload);
-
-      // Validate required fields exist
       validateRequiredFields(jsonNode);
 
-      // Extract and validate device_key
       final String deviceKey = extractAndValidateDeviceKey(jsonNode);
-
-      // Extract and validate water level
       Double waterLevel = extractAndValidateWaterLevel(jsonNode);
-
-      // Extract and validate pump_status
       final String pumpStatus = extractAndValidatePumpStatus(jsonNode);
       String timestampStr = extractTimestamp(jsonNode);
 
-      // Validate water level
       validateWaterLevel(waterLevel);
-
-      // Validate and convert pump status (before database call)
       PumpStatus pumpStatusEnum = validateAndConvertPumpStatus(pumpStatus);
-
-      // Validate device key format and existence
       Device device = validateAndGetDevice(deviceKey);
 
-      // Create and save WaterLevelData
       WaterLevelData data =
           createAndSaveWaterLevelData(device, waterLevel, pumpStatusEnum, timestampStr);
 
@@ -99,16 +87,19 @@ public class SensorDataServiceImpl implements SensorDataService {
           waterLevel,
           pumpStatusEnum);
 
-      // Broadcast to frontend via WebSocket
       broadcastSensorUpdate(data, device.getId(), waterLevel, pumpStatusEnum);
 
     } catch (IllegalArgumentException e) {
       LOGGER.warn("Invalid sensor data from topic {}: {}", topic, e.getMessage());
-    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+    } catch (JsonProcessingException e) {
       LOGGER.error("Failed to parse MQTT message JSON from topic {}: {}", topic, e.getMessage(), e);
+    } catch (SensorDataProcessingException e) {
+      LOGGER.error("Sensor data processing error from topic {}: {}", topic, e.getMessage(), e);
+      throw e;
     } catch (Exception e) {
       LOGGER.error("Unexpected error processing sensor data from topic: {}", topic, e);
-      throw new RuntimeException("Failed to process sensor data from topic: " + topic, e);
+      throw new SensorDataProcessingException(
+          "Failed to process sensor data from topic: " + topic, e);
     }
   }
 
@@ -182,7 +173,8 @@ public class SensorDataServiceImpl implements SensorDataService {
     }
     return deviceRepository
         .findByDeviceKey(deviceKey)
-        .orElseThrow(() -> new IllegalArgumentException("Device not found"));
+        .orElseThrow(
+            () -> new IllegalArgumentException(ApplicationConstants.DEVICE_NOT_FOUND_MESSAGE));
   }
 
   private WaterLevelData createAndSaveWaterLevelData(

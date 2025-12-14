@@ -1,6 +1,10 @@
 spring:
   application:
     name: water-level-monitoring-backend
+  profiles:
+    # Default to 'dev' for local development (best practice)
+    # Production should ALWAYS explicitly set SPRING_PROFILES_ACTIVE=prod via environment variable
+    default: ${SPRING_PROFILES_ACTIVE:dev}
 
   # Database Configuration
   # Profile-specific: database URL, driver, credentials in application-{profile}.yml
@@ -24,7 +28,7 @@ spring:
   # Base property required for @Value injection (will be overridden by profile configs)
   security:
     jwt:
-      secret: ${JWT_SECRET:test-secret-base-config}
+      secret: ${JWT_SECRET:d9186e580e5478f4c37fab2faca76464}
       expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
 
   # MQTT Configuration

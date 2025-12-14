@@ -8,10 +8,12 @@ import static org.mockito.Mockito.when;
 
 import com.example.waterlevel.dto.ErrorResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
@@ -35,7 +37,7 @@ class GlobalExceptionHandlerTest {
     FieldError fieldError = new FieldError("object", "field", "error message");
 
     when(ex.getBindingResult()).thenReturn(bindingResult);
-    when(bindingResult.getAllErrors()).thenReturn(java.util.Collections.singletonList(fieldError));
+    when(bindingResult.getAllErrors()).thenReturn(Collections.singletonList(fieldError));
 
     // Act
     ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationExceptions(ex);
@@ -106,8 +108,8 @@ class GlobalExceptionHandlerTest {
   @Test
   void handleHttpMessageNotReadableException_ReturnsBadRequest() {
     // Arrange
-    org.springframework.http.converter.HttpMessageNotReadableException ex =
-        new org.springframework.http.converter.HttpMessageNotReadableException(
+    HttpMessageNotReadableException ex =
+        new HttpMessageNotReadableException(
             "Unrecognized field", new RuntimeException("Root cause"));
 
     // Act

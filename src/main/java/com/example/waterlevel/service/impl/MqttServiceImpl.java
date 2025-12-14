@@ -132,7 +132,6 @@ public class MqttServiceImpl implements MqttService {
    * @return true if message was sent successfully, false otherwise
    */
   private boolean publishMessage(final String topic, final Object payload) {
-    // Serialize payload once (fail fast if serialization fails)
     String jsonPayload;
     try {
       jsonPayload = objectMapper.writeValueAsString(payload);
@@ -141,7 +140,6 @@ public class MqttServiceImpl implements MqttService {
       return false;
     }
 
-    // Try immediate send first
     try {
       mqttOutboundChannel.send(
           MessageBuilder.withPayload(jsonPayload.getBytes(StandardCharsets.UTF_8))
@@ -157,7 +155,6 @@ public class MqttServiceImpl implements MqttService {
           maxRetryAttempts,
           e.getMessage());
 
-      // If only one attempt, return false immediately
       if (maxRetryAttempts <= 1) {
         LOGGER.error("Failed to publish MQTT message to topic: {} after 1 attempt", topic, e);
         return false;
@@ -182,7 +179,6 @@ public class MqttServiceImpl implements MqttService {
                       .build());
               LOGGER.info(
                   "MQTT message published to topic: {} after {} attempt(s)", topic, currentAttempt);
-              // complete() returns false if already completed, preventing race condition
               future.complete(true);
             } catch (Exception e) {
               LOGGER.warn(
@@ -197,7 +193,6 @@ public class MqttServiceImpl implements MqttService {
                     topic,
                     maxRetryAttempts,
                     e);
-                // complete() returns false if already completed, preventing race condition
                 future.complete(false);
               }
             }
@@ -208,7 +203,6 @@ public class MqttServiceImpl implements MqttService {
       delay = Math.min((long) (delay * multiplier), maxDelayMs);
     }
 
-    // Wait for result with timeout
     try {
       return future.get(maxDelayMs * maxRetryAttempts, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {

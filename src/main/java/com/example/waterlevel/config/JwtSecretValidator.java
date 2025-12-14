@@ -29,7 +29,6 @@ public class JwtSecretValidator {
 
     String secretLower = jwtSecret.toLowerCase().trim();
 
-    // Check for weak secret patterns
     boolean isWeakSecret = false;
     for (String weakPattern : ApplicationConstants.WEAK_SECRET_PATTERNS) {
       if (secretLower.contains(weakPattern)) {
@@ -38,28 +37,24 @@ public class JwtSecretValidator {
       }
     }
 
-    // Check for insufficient length
+    // Check for insufficient length (JWT requires minimum 32 bytes = 256 bits)
     if (jwtSecret.length() < ApplicationConstants.MIN_JWT_SECRET_LENGTH) {
+      String errorMessage =
+          String.format(
+              "JWT secret is too short (%d characters). "
+                  + "JWT HMAC-SHA algorithms require at least %d characters (256 bits). "
+                  + "Please set a longer JWT_SECRET environment variable.",
+              jwtSecret.length(), ApplicationConstants.MIN_JWT_SECRET_LENGTH);
       if (isProductionProfile()) {
-        LOGGER.error(
-            "JWT secret is too short ({} characters). Minimum recommended length is {} characters. "
-                + "This is a security risk in production.",
-            jwtSecret.length(),
-            ApplicationConstants.MIN_JWT_SECRET_LENGTH);
-        throw new IllegalStateException(
-            "JWT secret is too short for production. "
-                + "Please set a strong JWT_SECRET environment variable with at least "
-                + ApplicationConstants.MIN_JWT_SECRET_LENGTH
-                + " characters.");
+        LOGGER.error("{} This is a security risk in production.", errorMessage);
+        throw new IllegalStateException(errorMessage);
       } else {
-        LOGGER.warn(
-            "JWT secret is shorter than recommended minimum length of {} characters. "
-                + "Consider using a longer secret for better security.",
-            ApplicationConstants.MIN_JWT_SECRET_LENGTH);
+        LOGGER.error(
+            "{} The application will fail to generate JWT tokens with this secret.", errorMessage);
+        throw new IllegalStateException(errorMessage);
       }
     }
 
-    // Check for weak patterns in production
     if (isWeakSecret && isProductionProfile()) {
       LOGGER.error(
           "Weak JWT secret pattern detected in production environment. "

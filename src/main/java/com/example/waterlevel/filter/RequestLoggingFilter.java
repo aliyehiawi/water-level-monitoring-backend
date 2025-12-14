@@ -34,23 +34,20 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       final FilterChain filterChain)
       throws ServletException, IOException {
 
-    // Skip logging for actuator endpoints and static resources
-    String path = request.getRequestURI();
-    if (path.startsWith("/api/actuator")
-        || path.startsWith("/api/h2-console")
-        || path.startsWith("/api/swagger")
-        || path.startsWith("/api/api-docs")) {
+    String path = request.getServletPath();
+    if (path != null
+        && (path.startsWith("/actuator")
+            || path.startsWith("/h2-console")
+            || path.startsWith("/swagger")
+            || path.startsWith("/api-docs"))) {
       filterChain.doFilter(request, response);
       return;
     }
 
-    // Generate trace ID for request correlation
     String traceId = UUID.randomUUID().toString();
     MDC.put(TRACE_ID_KEY, traceId);
 
     long startTime = System.currentTimeMillis();
-
-    // Wrap response to enable content caching for logging
     ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
     try {

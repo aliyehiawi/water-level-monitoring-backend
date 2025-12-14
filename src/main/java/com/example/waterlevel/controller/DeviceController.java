@@ -4,10 +4,9 @@ import com.example.waterlevel.dto.DeviceRegisterRequest;
 import com.example.waterlevel.dto.DeviceResponse;
 import com.example.waterlevel.entity.Device;
 import com.example.waterlevel.entity.User;
-import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuditService;
 import com.example.waterlevel.service.DeviceService;
-import com.example.waterlevel.util.SecurityUtil;
+import com.example.waterlevel.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller for device management endpoints (admin only). */
 @RestController
-@RequestMapping("/api/devices")
+@RequestMapping("/devices")
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Device Management", description = "Admin operations for managing devices")
 public class DeviceController {
@@ -42,15 +40,15 @@ public class DeviceController {
   private static final Logger LOGGER = LoggerFactory.getLogger(DeviceController.class);
 
   private final DeviceService deviceService;
-  private final UserRepository userRepository;
+  private final UserService userService;
   private final AuditService auditService;
 
   public DeviceController(
       final DeviceService deviceService,
-      final UserRepository userRepository,
+      final UserService userService,
       final AuditService auditService) {
     this.deviceService = deviceService;
-    this.userRepository = userRepository;
+    this.userService = userService;
     this.auditService = auditService;
   }
 
@@ -73,17 +71,15 @@ public class DeviceController {
   public ResponseEntity<DeviceResponse> registerDevice(
       @Valid @RequestBody final DeviceRegisterRequest request) {
     LOGGER.info("Device registration request: {}", request.getName());
-    String username = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    User admin = userService.getCurrentUser();
 
     Device device = deviceService.registerDevice(request, admin.getId());
 
     DeviceResponse response = mapToResponse(device);
     LOGGER.info(
-        "Device registered successfully by admin {}: deviceId={}", username, device.getId());
+        "Device registered successfully by admin {}: deviceId={}",
+        admin.getUsername(),
+        device.getId());
     auditService.logDeviceRegistration(admin.getId(), device.getId(), device.getName());
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
@@ -133,17 +129,12 @@ public class DeviceController {
   public ResponseEntity<Void> deleteDevice(
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long id) {
     LOGGER.info("Device deletion request: deviceId={}", id);
-    String username = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    User admin = userService.getCurrentUser();
 
-    // Validate ownership
     deviceService.validateDeviceOwnership(id, admin.getId());
 
     deviceService.deleteDevice(id);
-    LOGGER.info("Device deleted successfully by admin {}: deviceId={}", username, id);
+    LOGGER.info("Device deleted successfully by admin {}: deviceId={}", admin.getUsername(), id);
     auditService.logDeviceDeletion(admin.getId(), id);
     return ResponseEntity.noContent().build();
   }

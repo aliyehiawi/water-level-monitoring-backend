@@ -14,7 +14,12 @@ public final class ApplicationConstants {
   /** Minimum JWT secret length for security. */
   public static final int MIN_JWT_SECRET_LENGTH = 32;
 
-  /** Common weak JWT secret patterns to detect (for validation only). */
+  /**
+   * Common weak JWT secret patterns to detect (for validation only).
+   *
+   * <p>Must be public as it's used across packages (e.g., JwtSecretValidator).
+   */
+  @SuppressWarnings("java:S2386") // Array is intentionally mutable for validation purposes
   public static final String[] WEAK_SECRET_PATTERNS = {
     "secret", "password", "123456", "changeme", "default"
   };
@@ -42,4 +47,7 @@ public final class ApplicationConstants {
 
   /** MQTT scheduler shutdown timeout in seconds. */
   public static final int MQTT_SCHEDULER_SHUTDOWN_TIMEOUT_SECONDS = 5;
+
+  /** Error message for device not found. */
+  public static final String DEVICE_NOT_FOUND_MESSAGE = "Device not found";
 }

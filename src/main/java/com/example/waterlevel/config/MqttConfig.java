@@ -12,6 +12,7 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
+import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
@@ -92,11 +93,10 @@ public class MqttConfig {
   }
 
   @Bean
-  @ConditionalOnProperty(name = "spring.mqtt.enabled", havingValue = "true", matchIfMissing = true)
-  public org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter
-      mqttInboundAdapter() {
-    org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter adapter =
-        new org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter(
+  @ConditionalOnProperty(name = "mqtt.enabled", havingValue = "true", matchIfMissing = true)
+  public MqttPahoMessageDrivenChannelAdapter mqttInboundAdapter() {
+    MqttPahoMessageDrivenChannelAdapter adapter =
+        new MqttPahoMessageDrivenChannelAdapter(
             clientId + "-inbound-" + UUID.randomUUID().toString(),
             mqttClientFactory(),
             MqttTopics.SENSOR_DATA_PATTERN);

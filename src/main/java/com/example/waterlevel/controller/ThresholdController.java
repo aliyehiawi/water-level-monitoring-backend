@@ -4,12 +4,11 @@ import com.example.waterlevel.dto.ThresholdResponse;
 import com.example.waterlevel.dto.ThresholdUpdateRequest;
 import com.example.waterlevel.entity.Device;
 import com.example.waterlevel.entity.User;
-import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuditService;
 import com.example.waterlevel.service.DeviceService;
 import com.example.waterlevel.service.MqttService;
+import com.example.waterlevel.service.UserService;
 import com.example.waterlevel.service.WebSocketService;
-import com.example.waterlevel.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Controller for threshold management endpoints (admin only). */
 @RestController
-@RequestMapping("/api/devices/{deviceId}/thresholds")
+@RequestMapping("/devices/{deviceId}/thresholds")
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Threshold Management", description = "Admin operations for device thresholds")
 public class ThresholdController {
@@ -40,19 +38,19 @@ public class ThresholdController {
 
   private final DeviceService deviceService;
   private final MqttService mqttService;
-  private final UserRepository userRepository;
+  private final UserService userService;
   private final WebSocketService webSocketService;
   private final AuditService auditService;
 
   public ThresholdController(
       final DeviceService deviceService,
       final MqttService mqttService,
-      final UserRepository userRepository,
+      final UserService userService,
       final WebSocketService webSocketService,
       final AuditService auditService) {
     this.deviceService = deviceService;
     this.mqttService = mqttService;
-    this.userRepository = userRepository;
+    this.userService = userService;
     this.webSocketService = webSocketService;
     this.auditService = auditService;
   }
@@ -74,11 +72,7 @@ public class ThresholdController {
   public ResponseEntity<ThresholdResponse> getThresholds(
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long deviceId) {
     LOGGER.debug("Get thresholds request for deviceId: {}", deviceId);
-    String username = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    User admin = userService.getCurrentUser();
 
     Device device = deviceService.validateDeviceOwnership(deviceId, admin.getId());
 
@@ -111,23 +105,15 @@ public class ThresholdController {
         deviceId,
         request.getMinThreshold(),
         request.getMaxThreshold());
-    String username = SecurityUtil.getCurrentUsername();
-    User admin =
-        userRepository
-            .findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    User admin = userService.getCurrentUser();
 
-    // Validate ownership and get device (reuse to avoid duplicate query)
     Device device = deviceService.validateDeviceOwnership(deviceId, admin.getId());
-
-    // Update device thresholds (DTO validation ensures minThreshold < maxThreshold)
     Device updatedDevice =
         deviceService.updateThresholds(
             device,
             BigDecimal.valueOf(request.getMinThreshold()),
             BigDecimal.valueOf(request.getMaxThreshold()));
 
-    // Publish to MQTT for hardware
     boolean mqttSuccess =
         mqttService.publishThresholdUpdate(
             updatedDevice.getDeviceKey(),
@@ -138,18 +124,19 @@ public class ThresholdController {
     if (!mqttSuccess) {
       LOGGER.warn(
           "Failed to publish MQTT threshold update for deviceId: {}, but continuing", deviceId);
-      // Device will get update on next sensor data submission or can poll for threshold updates
     } else {
       LOGGER.info("Threshold update published to MQTT successfully for deviceId: {}", deviceId);
     }
 
-    // Broadcast to frontend via WebSocket
     webSocketService.sendThresholdUpdateConfirmation(
         deviceId, request.getMinThreshold(), request.getMaxThreshold());
 
     ThresholdResponse response =
         new ThresholdResponse(updatedDevice.getMinThreshold(), updatedDevice.getMaxThreshold());
-    LOGGER.info("Thresholds updated successfully by admin {} for deviceId: {}", username, deviceId);
+    LOGGER.info(
+        "Thresholds updated successfully by admin {} for deviceId: {}",
+        admin.getUsername(),
+        deviceId);
     auditService.logThresholdUpdate(
         admin.getId(), deviceId, request.getMinThreshold(), request.getMaxThreshold());
     return ResponseEntity.ok(response);

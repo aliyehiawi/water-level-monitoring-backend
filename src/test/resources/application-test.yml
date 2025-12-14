@@ -1,4 +1,8 @@
 # Test Configuration
+server:
+  servlet:
+    context-path: /  # No context path for tests (simpler, context path tested in integration tests)
+
 spring:
   # Use in-memory H2 for tests
   datasource:
@@ -20,11 +24,10 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
   # Security Configuration for tests
-  # Note: This is used by Spring Boot integration tests (@SpringBootTest)
-  # Unit tests use TestConstants.TEST_JWT_SECRET directly
+  # Used by Spring Boot integration tests (@SpringBootTest) and unit tests
   security:
     jwt:
-      secret: test-jwt-secret-for-integration-tests-only-32chars
+      secret: d9186e580e5478f4c37fab2faca76464
       expiration: 86400000
 
 # MQTT Configuration for tests

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,7 +51,7 @@ class AuthenticationFlowIT {
     String registerResponse =
         mockMvc
             .perform(
-                post("/api/auth/register")
+                post("/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(registerRequest)))
             .andExpect(status().isCreated())
@@ -73,7 +74,7 @@ class AuthenticationFlowIT {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/auth/login")
+                post("/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk())
@@ -87,7 +88,7 @@ class AuthenticationFlowIT {
 
     // Step 3: Get current user with token
     mockMvc
-        .perform(get("/api/auth/me").header("Authorization", "Bearer " + token))
+        .perform(get("/auth/me").header("Authorization", "Bearer " + token))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.username").value("testuser"))
         .andExpect(jsonPath("$.email").value("test@example.com"));
@@ -96,7 +97,7 @@ class AuthenticationFlowIT {
     User savedUser = userRepository.findByUsername("testuser").orElse(null);
     assertNotNull(savedUser);
     assertEquals("test@example.com", savedUser.getEmail());
-    assertEquals(User.Role.USER, savedUser.getRole());
+    assertEquals(Role.USER, savedUser.getRole());
   }
 
   @Test
@@ -106,7 +107,7 @@ class AuthenticationFlowIT {
     existingUser.setUsername("existinguser");
     existingUser.setEmail("existing@example.com");
     existingUser.setPassword(passwordEncoder.encode("password123"));
-    existingUser.setRole(User.Role.USER);
+    existingUser.setRole(Role.USER);
     userRepository.save(existingUser);
 
     // Try to register with same username
@@ -117,7 +118,7 @@ class AuthenticationFlowIT {
 
     mockMvc
         .perform(
-            post("/api/auth/register")
+            post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.waterlevel.service.impl.MqttServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +83,7 @@ class MqttServiceTest {
     // Arrange
     when(objectMapper.writeValueAsString(any()))
         .thenThrow(
-            new com.fasterxml.jackson.core.JsonProcessingException("Error") {
+            new JsonProcessingException("Error") {
               private static final long serialVersionUID = 1L;
             });
 

@@ -92,9 +92,6 @@ application-local.yml
 
 # Gradle local properties (not used - use environment variables instead)
 
-# Docker
-docker-compose.override.yml
-
 # Eclipse
 .classpath
 .project

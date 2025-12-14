@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.service.AuditService;
@@ -27,6 +28,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -49,24 +51,23 @@ class UserControllerTest {
     user1.setId(1L);
     user1.setUsername("user1");
     user1.setEmail("user1@example.com");
-    user1.setRole(User.Role.USER);
+    user1.setRole(Role.USER);
     user1.setCreatedAt(LocalDateTime.now());
 
     User user2 = new User();
     user2.setId(2L);
     user2.setUsername("user2");
     user2.setEmail("user2@example.com");
-    user2.setRole(User.Role.ADMIN);
+    user2.setRole(Role.ADMIN);
     user2.setCreatedAt(LocalDateTime.now());
 
     List<User> users = Arrays.asList(user1, user2);
     Page<User> userPage = new PageImpl<>(users, PageRequest.of(0, 20), 2);
-    when(userRepository.findAll(any(org.springframework.data.domain.Pageable.class)))
-        .thenReturn(userPage);
+    when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
 
     // Act & Assert
     mockMvc
-        .perform(get("/api/users"))
+        .perform(get("/users"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].username").value("user1"))
         .andExpect(jsonPath("$.content[1].username").value("user2"));
@@ -80,20 +81,20 @@ class UserControllerTest {
     admin.setId(1L);
     admin.setUsername("admin");
     admin.setEmail("admin@example.com");
-    admin.setRole(User.Role.ADMIN);
+    admin.setRole(Role.ADMIN);
 
     User user = new User();
     user.setId(2L);
     user.setUsername("user");
     user.setEmail("user@example.com");
-    user.setRole(User.Role.USER);
+    user.setRole(Role.USER);
     user.setCreatedAt(LocalDateTime.now());
 
     User promotedUser = new User();
     promotedUser.setId(2L);
     promotedUser.setUsername("user");
     promotedUser.setEmail("user@example.com");
-    promotedUser.setRole(User.Role.ADMIN);
+    promotedUser.setRole(Role.ADMIN);
     promotedUser.setCreatedAt(LocalDateTime.now());
 
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
@@ -102,7 +103,7 @@ class UserControllerTest {
 
     // Act & Assert
     mockMvc
-        .perform(put("/api/users/2/promote"))
+        .perform(put("/users/2/promote"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.role").value("ADMIN"));
 
@@ -117,14 +118,14 @@ class UserControllerTest {
     admin.setId(1L);
     admin.setUsername("admin");
     admin.setEmail("admin@example.com");
-    admin.setRole(User.Role.ADMIN);
+    admin.setRole(Role.ADMIN);
 
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(userRepository.existsById(2L)).thenReturn(true);
     doNothing().when(userRepository).deleteById(2L);
 
     // Act & Assert
-    mockMvc.perform(delete("/api/users/2")).andExpect(status().isNoContent());
+    mockMvc.perform(delete("/users/2")).andExpect(status().isNoContent());
 
     verify(userRepository).deleteById(2L);
   }
@@ -137,13 +138,13 @@ class UserControllerTest {
     admin.setId(1L);
     admin.setUsername("admin");
     admin.setEmail("admin@example.com");
-    admin.setRole(User.Role.ADMIN);
+    admin.setRole(Role.ADMIN);
 
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(userRepository.existsById(2L)).thenReturn(false);
 
     // Act & Assert
-    mockMvc.perform(delete("/api/users/2")).andExpect(status().isBadRequest());
+    mockMvc.perform(delete("/users/2")).andExpect(status().isBadRequest());
 
     verify(userRepository, never()).deleteById(any());
   }

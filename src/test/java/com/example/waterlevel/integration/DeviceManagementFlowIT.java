@@ -11,10 +11,12 @@ import com.example.waterlevel.dto.AuthRequest;
 import com.example.waterlevel.dto.AuthResponse;
 import com.example.waterlevel.dto.DeviceRegisterRequest;
 import com.example.waterlevel.dto.ThresholdUpdateRequest;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.DeviceRepository;
 import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.repository.WaterLevelDataRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +55,7 @@ class DeviceManagementFlowIT {
     admin.setUsername("admin");
     admin.setEmail("admin@example.com");
     admin.setPassword(passwordEncoder.encode("password123"));
-    admin.setRole(User.Role.ADMIN);
+    admin.setRole(Role.ADMIN);
     userRepository.save(admin);
 
     // Login as admin
@@ -64,7 +66,7 @@ class DeviceManagementFlowIT {
     String loginResponse =
         mockMvc
             .perform(
-                post("/api/auth/login")
+                post("/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk())
@@ -88,7 +90,7 @@ class DeviceManagementFlowIT {
     String deviceResponse =
         mockMvc
             .perform(
-                post("/api/devices/register")
+                post("/devices/register")
                     .header("Authorization", "Bearer " + adminToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(deviceRequest)))
@@ -100,19 +102,19 @@ class DeviceManagementFlowIT {
             .getContentAsString();
 
     // Extract device ID from response
-    com.fasterxml.jackson.databind.JsonNode deviceJson = objectMapper.readTree(deviceResponse);
+    JsonNode deviceJson = objectMapper.readTree(deviceResponse);
     Long deviceId = deviceJson.get("id").asLong();
 
     // Step 2: Get all devices
     mockMvc
-        .perform(get("/api/devices").header("Authorization", "Bearer " + adminToken))
+        .perform(get("/devices").header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].id").value(deviceId));
 
     // Step 3: Get thresholds
     mockMvc
         .perform(
-            get("/api/devices/" + deviceId + "/thresholds")
+            get("/devices/" + deviceId + "/thresholds")
                 .header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.minThreshold").value(10.0))
@@ -125,7 +127,7 @@ class DeviceManagementFlowIT {
 
     mockMvc
         .perform(
-            put("/api/devices/" + deviceId + "/thresholds")
+            put("/devices/" + deviceId + "/thresholds")
                 .header("Authorization", "Bearer " + adminToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(thresholdRequest)))
@@ -136,14 +138,14 @@ class DeviceManagementFlowIT {
     // Step 5: Start pump
     mockMvc
         .perform(
-            post("/api/devices/" + deviceId + "/pump/start")
+            post("/devices/" + deviceId + "/pump/start")
                 .header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk());
 
     // Step 6: Get pump status
     mockMvc
         .perform(
-            get("/api/devices/" + deviceId + "/pump/status")
+            get("/devices/" + deviceId + "/pump/status")
                 .header("Authorization", "Bearer " + adminToken))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.pumpStatus").exists());

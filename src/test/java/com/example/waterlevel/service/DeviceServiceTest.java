@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.waterlevel.dto.DeviceRegisterRequest;
 import com.example.waterlevel.entity.Device;
+import com.example.waterlevel.entity.Role;
 import com.example.waterlevel.entity.User;
 import com.example.waterlevel.repository.DeviceRepository;
 import com.example.waterlevel.repository.UserRepository;
@@ -45,7 +46,7 @@ class DeviceServiceTest {
     testAdmin = new User();
     testAdmin.setId(1L);
     testAdmin.setUsername("admin");
-    testAdmin.setRole(User.Role.ADMIN);
+    testAdmin.setRole(Role.ADMIN);
 
     registerRequest = new DeviceRegisterRequest();
     registerRequest.setName("Test Device");

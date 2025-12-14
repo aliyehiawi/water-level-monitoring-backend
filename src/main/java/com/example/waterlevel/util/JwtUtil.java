@@ -24,7 +24,15 @@ public class JwtUtil {
     if (secret == null || secret.trim().isEmpty()) {
       throw new IllegalStateException("JWT secret is not configured");
     }
-    return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+    if (keyBytes.length < 32) {
+      throw new IllegalStateException(
+          String.format(
+              "JWT secret must be at least 32 bytes (256 bits) for HMAC-SHA algorithms. "
+                  + "Current secret is %d bytes. Please set a longer JWT_SECRET environment variable.",
+              keyBytes.length));
+    }
+    return Keys.hmacShaKeyFor(keyBytes);
   }
 
   /**
