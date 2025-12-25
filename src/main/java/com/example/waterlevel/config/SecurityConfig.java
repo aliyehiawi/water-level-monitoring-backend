@@ -80,21 +80,16 @@ public class SecurityConfig {
             auth -> {
               auth.requestMatchers("/auth/**").permitAll();
               auth.requestMatchers("/ws/**").permitAll();
+              auth.requestMatchers("/actuator/health").permitAll();
 
               if (h2ConsoleEnabled && !isProduction) {
                 auth.requestMatchers("/h2-console/**").permitAll();
               }
 
               if (swaggerUiEnabled) {
-                if (isProduction) {
-                  auth.requestMatchers(
-                          "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
-                      .hasRole("ADMIN");
-                } else {
-                  auth.requestMatchers(
-                          "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
-                      .permitAll();
-                }
+                auth.requestMatchers(
+                        "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
+                    .permitAll();
               }
 
               auth.requestMatchers("/users/**").hasRole("ADMIN");

@@ -16,32 +16,65 @@ This tutorial provides step-by-step guides for common tasks and workflows in the
 
 ## Getting Started
 
-### Prerequisites
+### Option 1: Docker (Recommended - Easiest)
 
+**Prerequisites:**
+- Docker Desktop installed and running
+
+**Steps:**
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd water-level-monitoring-backend
+   ```
+
+2. **Start the application:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Verify the application is running:**
+   - Swagger UI: `http://localhost:8080/api/swagger-ui.html`
+   - OpenAPI JSON: `http://localhost:8080/api/api-docs`
+
+**That's it!** Docker handles building the app, starting the MQTT broker, and running everything. No Java, Gradle, or MQTT setup needed.
+
+For more Docker details, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
+
+### Option 2: Local Development Setup
+
+**Prerequisites:**
 - Java 21 or higher installed
 - Gradle 8.0 or higher
 - MQTT broker (see [MQTT_SETUP.md](MQTT_SETUP.md) for local Mosquitto installation)
 
-### Initial Setup
+**Steps:**
 
-1. **Clone and build the project:**
+1. **Clone the repository:**
    ```bash
    git clone <repository-url>
    cd water-level-monitoring-backend
-   ./gradlew build
    ```
 
-2. **Set environment variables:**
+2. **Set environment variable:**
    ```bash
+   # Windows PowerShell
+   $env:JWT_SECRET = "your-secret-key-minimum-32-characters-long"
+   
+   # Linux/Mac
    export JWT_SECRET=$(openssl rand -hex 32)
    ```
 
-3. **Run the application:**
+3. **Start MQTT broker** (if not already running):
+   - See [MQTT_SETUP.md](MQTT_SETUP.md) for instructions
+
+4. **Run the application:**
    ```bash
    ./gradlew bootRun
    ```
 
-4. **Verify the application is running:**
+5. **Verify the application is running:**
    - Health check: `http://localhost:8080/api/actuator/health`
    - Swagger UI: `http://localhost:8080/api/swagger-ui.html`
 
@@ -402,12 +435,14 @@ curl -X DELETE http://localhost:8080/api/users/2 \
 
 ### Complete Setup Workflow
 
-1. **Register as admin user** (first user should be manually promoted)
-2. **Register devices** for each water tank/monitoring point
-3. **Configure hardware devices** with device keys
-4. **Set thresholds** for each device
-5. **Connect frontend** to WebSocket for real-time updates
-6. **Monitor** water levels and pump status
+1. **Start the application** (Docker or local)
+2. **Register a user** via `/api/auth/register` (first user is automatically USER role)
+3. **Promote first user to ADMIN** (if needed, via database or manually)
+4. **Register devices** for each water tank/monitoring point
+5. **Configure hardware devices** with device keys from registration
+6. **Set thresholds** for each device
+7. **Connect frontend** to WebSocket for real-time updates
+8. **Monitor** water levels and pump status
 
 ### Daily Operations
 
