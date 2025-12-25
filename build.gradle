@@ -34,6 +34,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// JWT Dependencies
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
@@ -103,13 +104,8 @@ sonar {
 		property "sonar.projectKey", "water-level-monitoring-backend"
 		property "sonar.projectName", "Water Level Monitoring Backend"
 		property "sonar.host.url", "https://sonarcloud.io"
-		
-		// Organization key (public - safe to commit)
-		// This identifies which SonarCloud organization the project belongs to
 		property "sonar.organization", "aliyahyaoui"
 		
-		// Token (secret - must be set via SONAR_TOKEN environment variable)
-		// Each user needs to set their own token: export SONAR_TOKEN=your-token
 		def sonarToken = System.getenv("SONAR_TOKEN")
 		if (sonarToken) {
 			property "sonar.token", sonarToken
@@ -126,12 +122,9 @@ sonar {
 	}
 }
 
-// Make sonar depend on checkstyle and test to ensure reports exist
 tasks.named('sonar') {
 	dependsOn checkstyleMain, test, jacocoTestReport
 }
-
-// Custom tasks
 tasks.register('verify') {
 	dependsOn clean, spotlessCheck, checkstyleMain, test, jacocoTestReport
 	description = 'Runs all verification tasks'

@@ -28,11 +28,12 @@ A comprehensive backend system for monitoring water levels with automated pump c
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Java 21 or higher
-- Gradle 8.0 or higher
+### Quick Start (Recommended - Docker)
 
-### Installation
+**Prerequisites:**
+- Docker Desktop installed and running
+
+**Steps:**
 
 1. **Clone the repository**
    ```bash
@@ -40,12 +41,59 @@ A comprehensive backend system for monitoring water levels with automated pump c
    cd water-level-monitoring-backend
    ```
 
-2. **Run the application**
+2. **Start the application**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Access the application**
+   - API Base URL: `http://localhost:8080/api`
+   - Swagger UI: `http://localhost:8080/api/swagger-ui.html`
+   - OpenAPI JSON: `http://localhost:8080/api/api-docs`
+
+**What this does:**
+- Builds the Spring Boot application inside Docker (no Java/Gradle needed locally)
+- Starts the backend API container
+- Starts the Mosquitto MQTT broker container
+- Uses H2 in-memory database (same as local dev)
+
+**Stop the application:**
+```bash
+docker compose down
+```
+
+For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
+
+### Alternative: Local Development Setup
+
+**Prerequisites:**
+- Java 21 or higher
+- Gradle 8.0 or higher
+- MQTT broker (see [MQTT_SETUP.md](MQTT_SETUP.md) for local Mosquitto installation)
+
+**Steps:**
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd water-level-monitoring-backend
+   ```
+
+2. **Set required environment variable**
+   ```bash
+   # Windows PowerShell
+   $env:JWT_SECRET = "your-secret-key-here-min-32-chars"
+   
+   # Linux/Mac
+   export JWT_SECRET="your-secret-key-here-min-32-chars"
+   ```
+
+3. **Run the application**
    ```bash
    ./gradlew bootRun
    ```
 
-3. **Access the application**
+4. **Access the application**
    - API Base URL: `http://localhost:8080/api`
    - Swagger UI: `http://localhost:8080/api/swagger-ui.html`
    - H2 Console: `http://localhost:8080/api/h2-console`
@@ -137,7 +185,10 @@ java -jar app.jar
 ### Environment Variables
 
 **Required (Secrets - must be set in all environments):**
-- `JWT_SECRET` - Generate with: `openssl rand -hex 32`
+- `JWT_SECRET` - JWT signing secret (minimum 32 characters)
+  - Generate with: `openssl rand -hex 32` (Linux/Mac)
+  - Or use any string with at least 32 characters
+  - **Note:** Docker Compose sets this automatically, no manual setup needed
 
 **Optional (for production-like local testing):**
 - `DB_URL` - Database connection URL (e.g., `jdbc:postgresql://host:5432/db`)
@@ -164,11 +215,17 @@ The `dev` profile (`application-dev.yml`) includes:
 - Debug logging
 - Local MQTT broker (defaults to `tcp://localhost:1883`)
 - Localhost CORS origins
+- Swagger UI and OpenAPI docs are publicly accessible
 
-**To run locally:**
-1. Set `JWT_SECRET` environment variable (required)
-2. Optionally set `MQTT_BROKER_URL` if you want a different broker
-3. Run: `./gradlew bootRun` (automatically uses `dev` profile - no manual selection needed)
+**To run locally (without Docker):**
+1. Set `JWT_SECRET` environment variable (required, minimum 32 characters)
+2. Start MQTT broker locally (see [MQTT_SETUP.md](MQTT_SETUP.md))
+3. Optionally set `MQTT_BROKER_URL` if using a different broker
+4. Run: `./gradlew bootRun` (automatically uses `dev` profile)
+
+**To run with Docker:**
+- No setup needed - just run `docker compose up --build`
+- Docker handles MQTT broker automatically
 
 ### Production Configuration
 
@@ -285,8 +342,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📖 Additional Documentation
 
-- **[MQTT_SETUP.md](MQTT_SETUP.md)** - MQTT broker setup and configuration guide
-- **[tutorial.md](tutorial.md)** - Step-by-step tutorial and guides
+- **[DOCKER_COMPOSE.md](DOCKER_COMPOSE.md)** - Docker multi-container setup guide (recommended)
+- **[MQTT_SETUP.md](MQTT_SETUP.md)** - MQTT broker setup for local development
+- **[tutorial.md](tutorial.md)** - Step-by-step tutorial and API usage guides
 - **[Postman Collection](postman/)** - API testing collection
 
 ## 🔐 Security Best Practices
@@ -297,6 +355,41 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 4. **Database security**: Use strong passwords and restrict database access
 5. **CORS configuration**: Restrict allowed origins appropriately
 
+## 🔧 Troubleshooting
+
+### Docker Issues
+
+**Port already in use:**
+- Check if port 8080 or 1883 is already in use
+- Stop conflicting services or change ports in `docker-compose.yml`
+
+**Container won't start:**
+- Check logs: `docker compose logs backend`
+- Ensure Docker Desktop is running
+- Try rebuilding: `docker compose up --build`
+
+**MQTT connection issues:**
+- Verify Mosquitto container is running: `docker compose ps`
+- Check Mosquitto logs: `docker compose logs mosquitto`
+
+### Local Development Issues
+
+**JWT_SECRET error:**
+- Ensure `JWT_SECRET` is set and has at least 32 characters
+- Check environment variable is set correctly: `echo $JWT_SECRET` (Linux/Mac) or `$env:JWT_SECRET` (PowerShell)
+
+**MQTT connection refused:**
+- Ensure MQTT broker is running (see [MQTT_SETUP.md](MQTT_SETUP.md))
+- Verify `MQTT_BROKER_URL` is correct (default: `tcp://localhost:1883`)
+
+**Port 8080 already in use:**
+- Change port: Set `SERVER_PORT` environment variable to a different port
+- Or stop the service using port 8080
+
+**Swagger UI shows "Access Denied":**
+- Swagger UI is now publicly accessible by default
+- If you see access denied, check application logs for security configuration errors
+
 ## 📞 Support
 
 For support and questions:
@@ -304,3 +397,4 @@ For support and questions:
 - Check the [tutorial.md](tutorial.md) for detailed guides
 - Review API documentation at `/swagger-ui.html`
 - Check [MQTT_SETUP.md](MQTT_SETUP.md) for MQTT configuration help
+- Check [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md) for Docker-specific help
