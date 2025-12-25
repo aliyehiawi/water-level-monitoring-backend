@@ -138,6 +138,9 @@ For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
 - `POST /api/devices/{deviceId}/pump/start` - Manually start pump (publishes to MQTT)
 - `GET /api/devices/{deviceId}/pump/status` - Get current pump status
 
+### Water Level Data (Authenticated Users)
+- `GET /api/devices/{deviceId}/water-level-data` - Get paginated historical water level data for a device
+
 ### User Management (Admin Only)
 - `GET /api/users` - List all users
 - `PUT /api/users/{id}/promote` - Promote user to admin
