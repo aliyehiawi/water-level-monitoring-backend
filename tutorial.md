@@ -200,11 +200,54 @@ Water level data is automatically collected from hardware devices via MQTT. The 
 
 ### Viewing Historical Data
 
-Historical data can be accessed through the database or by implementing a dedicated endpoint. The data is stored in the `water_level_data` table with the following structure:
-- `device_id`: Reference to the device
-- `water_level`: Numeric value
-- `pump_status`: Enum value
-- `timestamp`: When the reading was taken
+**Get Paginated Water Level Data (Authenticated Users):**
+
+**Request:**
+```bash
+curl -X GET "http://localhost:8080/api/devices/1/water-level-data?page=0&size=20" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "id": 10,
+      "deviceId": 1,
+      "waterLevel": 55.25,
+      "pumpStatus": "OFF",
+      "timestamp": "2024-01-01T10:05:00"
+    },
+    {
+      "id": 9,
+      "deviceId": 1,
+      "waterLevel": 54.80,
+      "pumpStatus": "ON",
+      "timestamp": "2024-01-01T10:04:00"
+    }
+  ],
+  "totalElements": 150,
+  "totalPages": 8,
+  "size": 20,
+  "number": 0,
+  "first": true,
+  "last": false
+}
+```
+
+**Query Parameters:**
+- `page` (optional, default: 0) - Page number (0-indexed)
+- `size` (optional, default: 20, max: 200) - Number of records per page
+
+**Notes:**
+- Data is returned in descending order by timestamp (latest first)
+- Available to all authenticated users (not restricted to ADMIN)
+- The data is stored in the `water_level_data` table with the following structure:
+  - `device_id`: Reference to the device
+  - `water_level`: Numeric value
+  - `pump_status`: Enum value (ON, OFF, UNKNOWN)
+  - `timestamp`: When the reading was taken
 
 ## Pump Control
 

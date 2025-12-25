@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -93,6 +94,8 @@ public class SecurityConfig {
               }
 
               auth.requestMatchers("/users/**").hasRole("ADMIN");
+              auth.requestMatchers(HttpMethod.GET, "/devices/*/water-level-data/**")
+                  .authenticated();
               auth.requestMatchers("/devices/**").hasRole("ADMIN");
               auth.anyRequest().authenticated();
             })
