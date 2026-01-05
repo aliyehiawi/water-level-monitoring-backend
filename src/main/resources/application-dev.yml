@@ -41,7 +41,7 @@ spring:
 
   # WebSocket Configuration - Development
   websocket:
-    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200,http://localhost:5173}
 
   # MQTT Configuration - Development
   # Development defaults use local Mosquitto broker
@@ -58,7 +58,7 @@ spring:
 # CORS Configuration - Development
 # Other CORS settings (methods, headers, etc.) are in application.yml
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200,http://localhost:5173}
 
 # Logging Configuration - Development
 logging:
