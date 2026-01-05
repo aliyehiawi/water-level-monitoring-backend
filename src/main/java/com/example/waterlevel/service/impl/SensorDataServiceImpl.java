@@ -94,10 +94,9 @@ public class SensorDataServiceImpl implements SensorDataService {
     } catch (JsonProcessingException e) {
       LOGGER.error("Failed to parse MQTT message JSON from topic {}: {}", topic, e.getMessage(), e);
     } catch (SensorDataProcessingException e) {
-      LOGGER.error("Sensor data processing error from topic {}: {}", topic, e.getMessage(), e);
-      throw e;
+      throw new SensorDataProcessingException(
+          "Failed to process sensor data from topic: " + topic, e);
     } catch (Exception e) {
-      LOGGER.error("Unexpected error processing sensor data from topic: {}", topic, e);
       throw new SensorDataProcessingException(
           "Failed to process sensor data from topic: " + topic, e);
     }

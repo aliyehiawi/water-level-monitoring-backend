@@ -24,12 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -46,9 +49,9 @@ class ThresholdControllerTest {
   @MockBean private AuditService auditService;
   @Autowired private ObjectMapper objectMapper;
 
-  @Test
-  @WithMockUser(roles = "USER", username = "testuser")
-  void getThresholds_AsUser_Success() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"USER", "ADMIN"})
+  void getThresholds_AsAuthenticatedUser_Success(final String role) throws Exception {
     Device device = new Device();
     device.setId(1L);
     device.setMinThreshold(BigDecimal.valueOf(10.0));
@@ -57,24 +60,9 @@ class ThresholdControllerTest {
     when(deviceService.getDeviceById(1L)).thenReturn(device);
 
     mockMvc
-        .perform(get("/devices/1/thresholds"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.minThreshold").value(10.0))
-        .andExpect(jsonPath("$.maxThreshold").value(90.0));
-  }
-
-  @Test
-  @WithMockUser(roles = "ADMIN", username = "admin")
-  void getThresholds_AsAdmin_Success() throws Exception {
-    Device device = new Device();
-    device.setId(1L);
-    device.setMinThreshold(BigDecimal.valueOf(10.0));
-    device.setMaxThreshold(BigDecimal.valueOf(90.0));
-
-    when(deviceService.getDeviceById(1L)).thenReturn(device);
-
-    mockMvc
-        .perform(get("/devices/1/thresholds"))
+        .perform(
+            get("/devices/1/thresholds")
+                .with(SecurityMockMvcRequestPostProcessors.user("testuser").roles(role)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.minThreshold").value(10.0))
         .andExpect(jsonPath("$.maxThreshold").value(90.0));
