@@ -102,7 +102,9 @@ public class MqttConfig {
             MqttTopics.SENSOR_DATA_PATTERN);
     adapter.setQos(MqttConstants.DEFAULT_QOS_LEVEL);
     adapter.setOutputChannel(mqttInboundChannel());
-    adapter.setConverter(new DefaultPahoMessageConverter());
+    DefaultPahoMessageConverter converter = new DefaultPahoMessageConverter();
+    converter.setPayloadAsBytes(true);
+    adapter.setConverter(converter);
     return adapter;
   }
 }

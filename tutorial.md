@@ -191,6 +191,14 @@ curl -X GET "http://localhost:8080/api/devices?page=0&size=20" \
 }
 ```
 
+### Get Device Details (Authenticated Users)
+
+**Request:**
+```bash
+curl -X GET http://localhost:8080/api/devices/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 ## Monitoring Water Levels
 
 ### Understanding Water Level Data

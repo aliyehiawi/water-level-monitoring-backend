@@ -18,7 +18,6 @@ import com.example.waterlevel.service.DeviceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -93,14 +92,53 @@ class DeviceControllerTest {
     device.setMaxThreshold(BigDecimal.valueOf(90.0));
     device.setAdmin(admin);
     device.setCreatedAt(LocalDateTime.now());
-    List<Device> devices = Arrays.asList(device);
-    Page<Device> devicePage = new PageImpl<>(devices, PageRequest.of(0, 20), 1);
+    Page<Device> devicePage = new PageImpl<>(List.of(device), PageRequest.of(0, 20), 1);
     when(deviceService.getAllDevices(any(Pageable.class))).thenReturn(devicePage);
 
     mockMvc
         .perform(get("/devices"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].name").value("Test Device"));
+  }
+
+  @Test
+  @WithMockUser(roles = "USER", username = "testuser")
+  void getDeviceById_Success() throws Exception {
+    User admin = new User();
+    admin.setId(1L);
+    admin.setUsername("admin");
+
+    Device device = new Device();
+    device.setId(1L);
+    device.setName("Test Device");
+    device.setDeviceKey("test-key");
+    device.setMinThreshold(BigDecimal.valueOf(10.0));
+    device.setMaxThreshold(BigDecimal.valueOf(90.0));
+    device.setAdmin(admin);
+    device.setCreatedAt(LocalDateTime.now());
+    device.setUpdatedAt(LocalDateTime.now());
+
+    when(deviceService.getDeviceById(1L)).thenReturn(device);
+
+    mockMvc
+        .perform(get("/devices/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.name").value("Test Device"));
+  }
+
+  @Test
+  void getDeviceById_Unauthenticated_ReturnsUnauthorized() throws Exception {
+    mockMvc.perform(get("/devices/1")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER", username = "testuser")
+  void getDeviceById_NotFound_ReturnsBadRequest() throws Exception {
+    when(deviceService.getDeviceById(999L))
+        .thenThrow(new IllegalArgumentException("Device not found"));
+
+    mockMvc.perform(get("/devices/999")).andExpect(status().isBadRequest());
   }
 
   @Test
