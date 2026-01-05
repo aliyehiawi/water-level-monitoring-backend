@@ -2,8 +2,6 @@ package com.example.waterlevel.repository;
 
 import com.example.waterlevel.entity.Device;
 import com.example.waterlevel.entity.WaterLevelData;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,24 +17,7 @@ public interface WaterLevelDataRepository extends JpaRepository<WaterLevelData, 
 
   Page<WaterLevelData> findByDevice_Id(Long deviceId, Pageable pageable);
 
-  List<WaterLevelData> findByDeviceOrderByTimestampDesc(Device device, Pageable pageable);
-
-  @Query(
-      "SELECT w FROM WaterLevelData w WHERE w.device.id = :deviceId " + "ORDER BY w.timestamp DESC")
-  List<WaterLevelData> findLatestByDeviceId(@Param("deviceId") Long deviceId, Pageable pageable);
-
-  @Query(
-      "SELECT w FROM WaterLevelData w WHERE w.device.id = :deviceId "
-          + "AND w.timestamp BETWEEN :from AND :to "
-          + "ORDER BY w.timestamp DESC")
-  List<WaterLevelData> findByDeviceIdAndTimestampBetween(
-      @Param("deviceId") Long deviceId,
-      @Param("from") LocalDateTime from,
-      @Param("to") LocalDateTime to);
-
   Optional<WaterLevelData> findFirstByDeviceOrderByTimestampDesc(Device device);
-
-  List<WaterLevelData> findByDevice(Device device);
 
   @Modifying
   @Transactional

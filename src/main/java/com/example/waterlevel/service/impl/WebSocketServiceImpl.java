@@ -2,7 +2,6 @@ package com.example.waterlevel.service.impl;
 
 import com.example.waterlevel.constants.MessageTypes;
 import com.example.waterlevel.constants.WebSocketDestinations;
-import com.example.waterlevel.dto.websocket.PumpStatusMessage;
 import com.example.waterlevel.dto.websocket.SensorUpdateMessage;
 import com.example.waterlevel.dto.websocket.ThresholdUpdateMessage;
 import com.example.waterlevel.entity.PumpStatus;
@@ -46,21 +45,6 @@ public class WebSocketServiceImpl implements WebSocketService {
         new SensorUpdateMessage(
             MessageTypes.SENSOR_UPDATE, deviceId, waterLevel, pumpStatus, timestamp);
     sendMessage(deviceId, message, "sensor update");
-  }
-
-  /**
-   * Sends pump status change notification to frontend.
-   *
-   * @param deviceId the device ID
-   * @param pumpStatus the new pump status
-   * @param timestamp the timestamp
-   */
-  @Override
-  public void sendPumpStatusUpdate(
-      final Long deviceId, final PumpStatus pumpStatus, final String timestamp) {
-    PumpStatusMessage message =
-        new PumpStatusMessage(MessageTypes.PUMP_STATUS, deviceId, pumpStatus, timestamp);
-    sendMessage(deviceId, message, "pump status update");
   }
 
   /**

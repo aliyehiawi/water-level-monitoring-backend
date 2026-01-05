@@ -3,7 +3,6 @@ package com.example.waterlevel.service;
 import com.example.waterlevel.dto.DeviceRegisterRequest;
 import com.example.waterlevel.entity.Device;
 import java.math.BigDecimal;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,13 +21,6 @@ public interface DeviceService {
    * @return the created device
    */
   Device registerDevice(DeviceRegisterRequest request, Long adminId);
-
-  /**
-   * Gets all devices.
-   *
-   * @return list of all devices
-   */
-  List<Device> getAllDevices();
 
   /**
    * Gets all devices with pagination.

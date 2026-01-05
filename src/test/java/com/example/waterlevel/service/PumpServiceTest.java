@@ -46,54 +46,42 @@ class PumpServiceTest {
 
   @Test
   void getCurrentPumpStatus_WithData_ReturnsStatus() {
-    // Arrange
     when(waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(testDevice))
         .thenReturn(Optional.of(testData));
 
-    // Act
     PumpStatus status = pumpService.getCurrentPumpStatus(testDevice);
 
-    // Assert
     assertEquals(PumpStatus.ON, status);
   }
 
   @Test
   void getCurrentPumpStatus_NoData_ReturnsUnknown() {
-    // Arrange
     when(waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(testDevice))
         .thenReturn(Optional.empty());
 
-    // Act
     PumpStatus status = pumpService.getCurrentPumpStatus(testDevice);
 
-    // Assert
     assertEquals(PumpStatus.UNKNOWN, status);
   }
 
   @Test
   void getLatestData_WithData_ReturnsData() {
-    // Arrange
     when(waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(testDevice))
         .thenReturn(Optional.of(testData));
 
-    // Act
     Optional<WaterLevelData> result = pumpService.getLatestData(testDevice);
 
-    // Assert
     assertTrue(result.isPresent());
     assertEquals(PumpStatus.ON, result.get().getPumpStatus());
   }
 
   @Test
   void getLatestData_NoData_ReturnsEmpty() {
-    // Arrange
     when(waterLevelDataRepository.findFirstByDeviceOrderByTimestampDesc(testDevice))
         .thenReturn(Optional.empty());
 
-    // Act
     Optional<WaterLevelData> result = pumpService.getLatestData(testDevice);
 
-    // Assert
     assertFalse(result.isPresent());
   }
 }

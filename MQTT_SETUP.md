@@ -21,6 +21,23 @@ The backend uses MQTT for real-time communication with hardware devices:
 
 - `devices/+/sensor/data` - Sensor data from hardware (wildcard subscription)
 
+**Inbound payload requirements (backend validation):**
+- JSON fields required: `device_key`, `water_level`, `pump_status`
+- `device_key` must be a **UUID string** and must match a **registered device** in the database.
+
+## Using Docker?
+
+**If you're running the application with Docker Compose**, you don't need this guide!
+
+Docker automatically:
+- Starts the Mosquitto MQTT broker container
+- Configures the backend to connect to it
+- No manual installation or configuration needed
+
+This guide is only for **local development without Docker** (when running `./gradlew bootRun` directly).
+
+---
+
 ## Recommended: Local Mosquitto Installation (Windows)
 
 **Best for**: Local development and testing
@@ -186,7 +203,8 @@ You should see "Hello MQTT!" appear in the subscriber window.
 mosquitto_sub -h localhost -t "devices/+/sensor/data" -v
 
 # In another terminal, publish test sensor data
-mosquitto_pub -h localhost -t "devices/test-device/sensor/data" -m '{"device_key":"test-key","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
+# IMPORTANT: Replace <DEVICE_KEY> with a real device key returned by POST /api/devices/register
+mosquitto_pub -h localhost -t "devices/<DEVICE_KEY>/sensor/data" -m '{"device_key":"<DEVICE_KEY>","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
 ```
 
 **Test 3: Run Your Application**
@@ -226,7 +244,8 @@ Connected to broker: tcp://localhost:1883
 mosquitto_sub -h localhost -t "devices/+/sensor/data" -v
 
 # Publish test message
-mosquitto_pub -h localhost -t "devices/test-device/sensor/data" -m '{"device_key":"test-key","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
+# IMPORTANT: Replace <DEVICE_KEY> with a real device key returned by POST /api/devices/register
+mosquitto_pub -h localhost -t "devices/<DEVICE_KEY>/sensor/data" -m '{"device_key":"<DEVICE_KEY>","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
 ```
 
 ### Step 8: Configure for Hardware Device Access
@@ -470,7 +489,8 @@ mosquitto_sub -h localhost -t "devices/+/sensor/data" -v
 **Publish test sensor data**:
 
 ```powershell
-mosquitto_pub -h localhost -t "devices/test-device/sensor/data" -m '{"device_key":"test-key","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
+# IMPORTANT: Replace <DEVICE_KEY> with a real device key returned by POST /api/devices/register
+mosquitto_pub -h localhost -t "devices/<DEVICE_KEY>/sensor/data" -m '{"device_key":"<DEVICE_KEY>","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
 ```
 
 **Subscribe to pump control commands**:
@@ -507,7 +527,8 @@ mosquitto_sub -h localhost -t "devices/+/thresholds/update" -v
 4. **Publish test sensor data** (Terminal 3):
 
    ```powershell
-   mosquitto_pub -h localhost -t "devices/test-device/sensor/data" -m '{"device_key":"test-key","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
+   # IMPORTANT: Replace <DEVICE_KEY> with a real device key returned by POST /api/devices/register
+   mosquitto_pub -h localhost -t "devices/<DEVICE_KEY>/sensor/data" -m '{"device_key":"<DEVICE_KEY>","water_level":50.5,"pump_status":"ON","timestamp":"2024-01-01T12:00:00"}'
    ```
 5. **Verify**:
 

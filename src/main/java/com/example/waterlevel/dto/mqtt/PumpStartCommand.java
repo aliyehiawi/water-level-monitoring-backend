@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for MQTT pump start command. */
 @Getter
 @Setter
 @NoArgsConstructor

@@ -41,7 +41,6 @@ class AuthControllerTest {
 
   @Test
   void register_Success() throws Exception {
-    // Arrange
     AuthRequest request = new AuthRequest();
     request.setUsername("testuser");
     request.setEmail("test@example.com");
@@ -53,7 +52,6 @@ class AuthControllerTest {
 
     when(authService.register(any(AuthRequest.class))).thenReturn(authResponse);
 
-    // Act & Assert
     mockMvc
         .perform(
             post("/auth/register")
@@ -66,11 +64,9 @@ class AuthControllerTest {
 
   @Test
   void register_InvalidRequest_ReturnsBadRequest() throws Exception {
-    // Arrange
     AuthRequest request = new AuthRequest();
     request.setUsername(""); // Invalid
 
-    // Act & Assert
     mockMvc
         .perform(
             post("/auth/register")
@@ -81,7 +77,6 @@ class AuthControllerTest {
 
   @Test
   void login_Success() throws Exception {
-    // Arrange
     AuthRequest request = new AuthRequest();
     request.setUsername("testuser");
     request.setPassword("password123");
@@ -92,7 +87,6 @@ class AuthControllerTest {
 
     when(authService.login(any(AuthRequest.class))).thenReturn(authResponse);
 
-    // Act & Assert
     mockMvc
         .perform(
             post("/auth/login")
@@ -106,7 +100,6 @@ class AuthControllerTest {
   @Test
   @WithMockUser(username = "testuser")
   void getCurrentUser_Success() throws Exception {
-    // Arrange
     User user = new User();
     user.setId(1L);
     user.setUsername("testuser");
@@ -116,7 +109,6 @@ class AuthControllerTest {
 
     when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-    // Act & Assert
     mockMvc
         .perform(get("/auth/me"))
         .andExpect(status().isOk())
@@ -126,7 +118,6 @@ class AuthControllerTest {
 
   @Test
   void getCurrentUser_Unauthenticated_ReturnsUnauthorized() throws Exception {
-    // Act & Assert
     mockMvc.perform(get("/auth/me")).andExpect(status().isUnauthorized());
   }
 }

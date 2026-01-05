@@ -42,7 +42,6 @@ class PumpControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void startPump_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -55,7 +54,6 @@ class PumpControllerTest {
     when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
     when(mqttService.publishPumpStartCommand(anyString(), anyLong())).thenReturn(true);
 
-    // Act & Assert
     mockMvc.perform(post("/devices/1/pump/start")).andExpect(status().isOk());
 
     verify(mqttService).publishPumpStartCommand("test-key", 1L);
@@ -64,7 +62,6 @@ class PumpControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void startPump_MqttFailure_ReturnsInternalServerError() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -77,14 +74,12 @@ class PumpControllerTest {
     when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
     when(mqttService.publishPumpStartCommand(anyString(), anyLong())).thenReturn(false);
 
-    // Act & Assert
     mockMvc.perform(post("/devices/1/pump/start")).andExpect(status().isInternalServerError());
   }
 
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void getPumpStatus_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -100,7 +95,6 @@ class PumpControllerTest {
     when(pumpService.getCurrentPumpStatus(device)).thenReturn(PumpStatus.ON);
     when(pumpService.getLatestData(device)).thenReturn(Optional.of(data));
 
-    // Act & Assert
     mockMvc
         .perform(get("/devices/1/pump/status"))
         .andExpect(status().isOk())

@@ -61,7 +61,6 @@ class AuthServiceTest {
 
   @Test
   void register_Success() {
-    // Arrange
     when(userRepository.existsByUsername(anyString())).thenReturn(false);
     when(userRepository.existsByEmail(anyString())).thenReturn(false);
     when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
@@ -69,10 +68,8 @@ class AuthServiceTest {
     when(jwtUtil.generateToken(anyString(), anyString(), any())).thenReturn("testToken");
     when(jwtUtil.getExpiration()).thenReturn(86400000L);
 
-    // Act
     AuthResponse response = authService.register(authRequest);
 
-    // Assert
     assertNotNull(response);
     assertEquals("testToken", response.getToken());
     assertNotNull(response.getUser());
@@ -83,28 +80,23 @@ class AuthServiceTest {
 
   @Test
   void register_UsernameExists_ThrowsException() {
-    // Arrange
     when(userRepository.existsByUsername(anyString())).thenReturn(true);
 
-    // Act & Assert
     assertThrows(IllegalArgumentException.class, () -> authService.register(authRequest));
     verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
   void register_EmailExists_ThrowsException() {
-    // Arrange
     when(userRepository.existsByUsername(anyString())).thenReturn(false);
     when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
-    // Act & Assert
     assertThrows(IllegalArgumentException.class, () -> authService.register(authRequest));
     verify(userRepository, never()).save(any(User.class));
   }
 
   @Test
   void login_Success() {
-    // Arrange
     Authentication authentication = mock(Authentication.class);
     when(authentication.getName()).thenReturn("testuser");
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -113,10 +105,8 @@ class AuthServiceTest {
     when(jwtUtil.generateToken(anyString(), anyString(), any())).thenReturn("testToken");
     when(jwtUtil.getExpiration()).thenReturn(86400000L);
 
-    // Act
     AuthResponse response = authService.login(authRequest);
 
-    // Assert
     assertNotNull(response);
     assertEquals("testToken", response.getToken());
     assertNotNull(response.getUser());
@@ -126,11 +116,9 @@ class AuthServiceTest {
 
   @Test
   void login_InvalidCredentials_ThrowsException() {
-    // Arrange
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
         .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-    // Act & Assert
     assertThrows(BadCredentialsException.class, () -> authService.login(authRequest));
     verify(userRepository, never()).findByUsername(anyString());
   }

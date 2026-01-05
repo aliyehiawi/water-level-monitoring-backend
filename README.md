@@ -17,8 +17,7 @@ A comprehensive backend system for monitoring water levels with automated pump c
 ### Database Schema
 - **Users**: User accounts with role-based permissions
 - **Devices**: Registered monitoring devices with unique keys
-- **WaterLevelData**: Historical sensor readings and thresholds
-- **PumpControl**: Manual pump control flags
+- **WaterLevelData**: Historical sensor readings (water level + pump status)
 
 ### Security
 - JWT-based authentication
@@ -55,7 +54,10 @@ A comprehensive backend system for monitoring water levels with automated pump c
 - Builds the Spring Boot application inside Docker (no Java/Gradle needed locally)
 - Starts the backend API container
 - Starts the Mosquitto MQTT broker container
+- **MQTT is automatically configured** - no manual setup needed (broker URL: `tcp://mosquitto:1883`)
 - Uses H2 in-memory database (same as local dev)
+
+**Note:** If you're using Docker, you don't need to follow the MQTT setup guide. The MQTT broker is automatically started and configured.
 
 **Stop the application:**
 ```bash
@@ -125,14 +127,14 @@ For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
 - `POST /api/auth/login` - User login (returns JWT token)
 - `GET /api/auth/me` - Get current authenticated user
 
-### Device Management (Admin Only)
-- `POST /api/devices/register` - Register new device (returns device key)
-- `GET /api/devices` - List all devices
-- `DELETE /api/devices/{id}` - Delete device
+### Device Management
+- `GET /api/devices` - List all devices (Authenticated Users)
+- `POST /api/devices/register` - Register new device (returns device key) (Admin Only)
+- `DELETE /api/devices/{id}` - Delete device (Admin Only)
 
-### Threshold Management (Admin Only)
-- `GET /api/devices/{deviceId}/thresholds` - Get current thresholds
-- `PUT /api/devices/{deviceId}/thresholds` - Update thresholds (publishes to MQTT)
+### Threshold Management
+- `GET /api/devices/{deviceId}/thresholds` - Get current thresholds (Authenticated Users)
+- `PUT /api/devices/{deviceId}/thresholds` - Update thresholds (publishes to MQTT) (Admin Only)
 
 ### Pump Control (Admin Only)
 - `POST /api/devices/{deviceId}/pump/start` - Manually start pump (publishes to MQTT)

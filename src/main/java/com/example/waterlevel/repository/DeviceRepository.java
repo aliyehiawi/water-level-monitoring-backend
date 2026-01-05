@@ -35,7 +35,5 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
   @Override
   List<Device> findAll();
 
-  boolean existsByDeviceKey(String deviceKey);
-
   boolean existsByAdminId(Long adminId);
 }

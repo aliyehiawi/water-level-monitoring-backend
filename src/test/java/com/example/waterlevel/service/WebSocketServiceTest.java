@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import com.example.waterlevel.constants.WebSocketDestinations;
-import com.example.waterlevel.dto.websocket.PumpStatusMessage;
 import com.example.waterlevel.dto.websocket.SensorUpdateMessage;
 import com.example.waterlevel.dto.websocket.ThresholdUpdateMessage;
 import com.example.waterlevel.entity.PumpStatus;
@@ -29,16 +28,13 @@ class WebSocketServiceTest {
 
   @Test
   void sendSensorUpdate_SendsMessage() {
-    // Arrange
     Long deviceId = 1L;
     Double waterLevel = 50.5;
     PumpStatus pumpStatus = PumpStatus.ON;
     String timestamp = "2023-01-01T12:00:00";
 
-    // Act
     webSocketService.sendSensorUpdate(deviceId, waterLevel, pumpStatus, timestamp);
 
-    // Assert
     ArgumentCaptor<Object> messageCaptor = ArgumentCaptor.forClass(Object.class);
     verify(messagingTemplate)
         .convertAndSend(eq(WebSocketDestinations.deviceTopic(deviceId)), messageCaptor.capture());
@@ -50,36 +46,13 @@ class WebSocketServiceTest {
   }
 
   @Test
-  void sendPumpStatusUpdate_SendsMessage() {
-    // Arrange
-    Long deviceId = 1L;
-    PumpStatus pumpStatus = PumpStatus.OFF;
-    String timestamp = "2023-01-01T12:00:00";
-
-    // Act
-    webSocketService.sendPumpStatusUpdate(deviceId, pumpStatus, timestamp);
-
-    // Assert
-    ArgumentCaptor<Object> messageCaptor = ArgumentCaptor.forClass(Object.class);
-    verify(messagingTemplate)
-        .convertAndSend(eq(WebSocketDestinations.deviceTopic(deviceId)), messageCaptor.capture());
-    PumpStatusMessage message = (PumpStatusMessage) messageCaptor.getValue();
-    assertEquals(deviceId, message.getDeviceId());
-    assertEquals(PumpStatus.OFF, message.getPumpStatus());
-    assertEquals(timestamp, message.getTimestamp());
-  }
-
-  @Test
   void sendThresholdUpdateConfirmation_SendsMessage() {
-    // Arrange
     Long deviceId = 1L;
     Double minThreshold = 10.0;
     Double maxThreshold = 90.0;
 
-    // Act
     webSocketService.sendThresholdUpdateConfirmation(deviceId, minThreshold, maxThreshold);
 
-    // Assert
     ArgumentCaptor<Object> messageCaptor = ArgumentCaptor.forClass(Object.class);
     verify(messagingTemplate)
         .convertAndSend(eq(WebSocketDestinations.deviceTopic(deviceId)), messageCaptor.capture());
@@ -91,7 +64,6 @@ class WebSocketServiceTest {
 
   @Test
   void sendSensorUpdate_Exception_LogsError() {
-    // Arrange
     Long deviceId = 1L;
     Double waterLevel = 50.5;
     PumpStatus pumpStatus = PumpStatus.ON;
@@ -101,10 +73,8 @@ class WebSocketServiceTest {
         .when(messagingTemplate)
         .convertAndSend(eq(WebSocketDestinations.deviceTopic(deviceId)), any(Object.class));
 
-    // Act
     webSocketService.sendSensorUpdate(deviceId, waterLevel, pumpStatus, timestamp);
 
-    // Assert - Should not throw, just log error
     verify(messagingTemplate)
         .convertAndSend(eq(WebSocketDestinations.deviceTopic(deviceId)), any(Object.class));
   }

@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for device registration request. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,11 +32,6 @@ public class DeviceRegisterRequest {
   @DecimalMax(value = "999.99", message = "Maximum threshold must be <= 999.99")
   private Double maxThreshold;
 
-  /**
-   * Validates that minimum threshold is less than maximum threshold.
-   *
-   * @return true if minThreshold < maxThreshold
-   */
   @AssertTrue(message = "Minimum threshold must be less than maximum threshold")
   @JsonIgnore // Prevent Jackson from trying to deserialize this validation method
   public boolean isValidThresholdRange() {

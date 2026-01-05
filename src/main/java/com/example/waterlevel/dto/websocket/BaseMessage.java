@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Base message class with common fields for WebSocket messages. */
 @Getter
 @Setter
 @NoArgsConstructor

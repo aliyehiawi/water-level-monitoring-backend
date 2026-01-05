@@ -66,7 +66,6 @@ class SensorDataServiceTest {
 
   @Test
   void processSensorData_ValidData_SavesAndBroadcasts() throws Exception {
-    // Arrange
     String payload =
         "{\"device_key\":\"123e4567-e89b-12d3-a456-426614174000\",\"water_level\":50.5,\"pump_status\":\"ON\"}";
     byte[] payloadBytes = payload.getBytes();
@@ -96,10 +95,8 @@ class SensorDataServiceTest {
     when(waterLevelDataRepository.save(any(WaterLevelData.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    // Act
     sensorDataService.processSensorData(message);
 
-    // Assert
     verify(deviceRepository).findByDeviceKey("123e4567-e89b-12d3-a456-426614174000");
     ArgumentCaptor<WaterLevelData> dataCaptor = ArgumentCaptor.forClass(WaterLevelData.class);
     verify(waterLevelDataRepository).save(dataCaptor.capture());
@@ -112,7 +109,6 @@ class SensorDataServiceTest {
 
   @Test
   void processSensorData_InvalidDeviceKey_LogsWarning() throws Exception {
-    // Arrange
     String payload = "{\"device_key\":\"invalid-key\",\"water_level\":50.5,\"pump_status\":\"ON\"}";
     byte[] payloadBytes = payload.getBytes();
 
@@ -131,10 +127,8 @@ class SensorDataServiceTest {
     lenient().when(jsonNode.get("water_level")).thenReturn(waterLevelNode);
     lenient().when(jsonNode.get("pump_status")).thenReturn(pumpStatusNode);
 
-    // Act
     sensorDataService.processSensorData(message);
 
-    // Assert
     verify(deviceRepository, never()).findByDeviceKey(anyString());
     verify(waterLevelDataRepository, never()).save(any());
     verify(webSocketService, never()).sendSensorUpdate(anyLong(), anyDouble(), any(), anyString());
@@ -142,7 +136,6 @@ class SensorDataServiceTest {
 
   @Test
   void processSensorData_DeviceNotFound_LogsWarning() throws Exception {
-    // Arrange
     String payload =
         "{\"device_key\":\"123e4567-e89b-12d3-a456-426614174000\",\"water_level\":50.5,\"pump_status\":\"ON\"}";
     byte[] payloadBytes = payload.getBytes();
@@ -170,10 +163,8 @@ class SensorDataServiceTest {
     when(deviceRepository.findByDeviceKey("123e4567-e89b-12d3-a456-426614174000"))
         .thenReturn(Optional.empty());
 
-    // Act
     sensorDataService.processSensorData(message);
 
-    // Assert
     verify(deviceRepository).findByDeviceKey("123e4567-e89b-12d3-a456-426614174000");
     verify(waterLevelDataRepository, never()).save(any());
     verify(webSocketService, never()).sendSensorUpdate(anyLong(), anyDouble(), any(), anyString());
@@ -181,7 +172,6 @@ class SensorDataServiceTest {
 
   @Test
   void processSensorData_InvalidPumpStatus_LogsWarning() throws Exception {
-    // Arrange
     String payload =
         "{\"device_key\":\"123e4567-e89b-12d3-a456-426614174000\",\"water_level\":50.5,\"pump_status\":\"INVALID\"}";
     byte[] payloadBytes = payload.getBytes();
@@ -205,10 +195,8 @@ class SensorDataServiceTest {
     when(pumpStatusNode.isNull()).thenReturn(false);
     when(pumpStatusNode.asText()).thenReturn("INVALID");
 
-    // Act
     sensorDataService.processSensorData(message);
 
-    // Assert
     verify(deviceRepository, never()).findByDeviceKey(anyString());
     verify(waterLevelDataRepository, never()).save(any());
     verify(webSocketService, never()).sendSensorUpdate(anyLong(), anyDouble(), any(), anyString());

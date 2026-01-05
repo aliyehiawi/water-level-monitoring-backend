@@ -21,15 +21,6 @@ public interface WebSocketService {
   void sendSensorUpdate(Long deviceId, Double waterLevel, PumpStatus pumpStatus, String timestamp);
 
   /**
-   * Sends pump status change notification to frontend.
-   *
-   * @param deviceId the device ID
-   * @param pumpStatus the new pump status
-   * @param timestamp the timestamp
-   */
-  void sendPumpStatusUpdate(Long deviceId, PumpStatus pumpStatus, String timestamp);
-
-  /**
    * Sends threshold update confirmation to frontend.
    *
    * @param deviceId the device ID

@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for sensor update WebSocket message. */
 @Getter
 @Setter
 @NoArgsConstructor

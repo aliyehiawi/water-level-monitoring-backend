@@ -41,56 +41,44 @@ class MqttServiceTest {
 
   @Test
   void publishPumpStartCommand_Success() {
-    // Arrange
     when(mqttOutboundChannel.send(any(Message.class))).thenReturn(true);
 
-    // Act
     boolean result = mqttService.publishPumpStartCommand("device-key", 1L);
 
-    // Assert
     assertTrue(result);
     verify(mqttOutboundChannel).send(any(Message.class));
   }
 
   @Test
   void publishPumpStartCommand_Failure_ReturnsFalse() {
-    // Arrange
     when(mqttOutboundChannel.send(any(Message.class)))
         .thenThrow(new RuntimeException("MQTT error"));
 
-    // Act
     boolean result = mqttService.publishPumpStartCommand("device-key", 1L);
 
-    // Assert
     assertFalse(result);
   }
 
   @Test
   void publishThresholdUpdate_Success() {
-    // Arrange
     when(mqttOutboundChannel.send(any(Message.class))).thenReturn(true);
 
-    // Act
     boolean result = mqttService.publishThresholdUpdate("device-key", 10.0, 90.0, 1L);
 
-    // Assert
     assertTrue(result);
     verify(mqttOutboundChannel).send(any(Message.class));
   }
 
   @Test
   void publishThresholdUpdate_SerializationError_ReturnsFalse() throws Exception {
-    // Arrange
     when(objectMapper.writeValueAsString(any()))
         .thenThrow(
             new JsonProcessingException("Error") {
               private static final long serialVersionUID = 1L;
             });
 
-    // Act
     boolean result = mqttService.publishThresholdUpdate("device-key", 10.0, 90.0, 1L);
 
-    // Assert
     assertFalse(result);
     verify(mqttOutboundChannel, never()).send(any(Message.class));
   }
