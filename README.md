@@ -2,7 +2,7 @@
 
 A comprehensive backend system for monitoring water levels with automated pump control, user management, and real-time data monitoring.
 
-## 📋 Features
+## Features
 
 - **User Management**: Registration, authentication, and role-based access control (USER/ADMIN)
 - **Device Management**: Device registration with secure key-based authentication
@@ -12,7 +12,7 @@ A comprehensive backend system for monitoring water levels with automated pump c
 - **Audit Logging**: Comprehensive logging and audit trails
 - **API Documentation**: Interactive Swagger/OpenAPI documentation
 
-## 🏗️ Architecture
+## Architecture
 
 ### Database Schema
 - **Users**: User accounts with role-based permissions
@@ -25,7 +25,7 @@ A comprehensive backend system for monitoring water levels with automated pump c
 - Device key validation for hardware communication
 - Comprehensive audit logging
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Quick Start (Recommended - Docker)
 
@@ -116,7 +116,7 @@ For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
 ./gradlew javadoc
 ```
 
-## 📚 API Documentation
+## API Documentation
 
 ### Interactive Documentation
 - **Swagger UI**: `http://localhost:8080/api/swagger-ui.html`
@@ -156,7 +156,7 @@ For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
 ### Postman Collection
 Import the Postman collection from `postman/Water-Level-Monitoring-API.postman_collection.json` for easy API testing.
 
-## 🔧 Configuration
+## Configuration
 
 ### Spring Boot Profiles (Best Practice)
 
@@ -261,7 +261,7 @@ Log levels:
 - **Development**: DEBUG for application, INFO for root
 - **Production**: INFO for application, WARN for root
 
-## 🧪 Testing
+## Testing
 
 ### Running Tests
 ```bash
@@ -290,7 +290,7 @@ Import the Postman collection for manual API testing:
 3. Set `base_url` environment variable
 4. Login to automatically set `jwt_token` variable
 
-## 📊 Code Quality
+## Code Quality
 
 ### Static Analysis
 - **Spotless**: Code formatting with Google Java Format
@@ -306,7 +306,7 @@ Import the Postman collection for manual API testing:
 ./gradlew test
 ```
 
-## 🚀 CI/CD Pipeline
+## CI/CD Pipeline
 
 The GitHub Actions workflow automatically:
 1. Code formatting validation (`spotlessCheck`)
@@ -325,7 +325,7 @@ The GitHub Actions workflow automatically:
 
 **Note:** The organization key is already configured in `build.gradle` (it's public). Only the token needs to be set per user.
 
-## 🤝 Contributing
+## Contributing
 
 1. Follow conventional commit format
 2. Ensure code is properly formatted (`./gradlew spotlessApply`)
@@ -341,18 +341,18 @@ fix(device): resolve device key validation issue
 docs(readme): update installation instructions
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📖 Additional Documentation
+## Additional Documentation
 
 - **[DOCKER_COMPOSE.md](DOCKER_COMPOSE.md)** - Docker multi-container setup guide (recommended)
 - **[MQTT_SETUP.md](MQTT_SETUP.md)** - MQTT broker setup for local development
 - **[tutorial.md](tutorial.md)** - Step-by-step tutorial and API usage guides
 - **[Postman Collection](postman/)** - API testing collection
 
-## 🔐 Security Best Practices
+## Security Best Practices
 
 1. **Never commit secrets**: Use environment variables for all sensitive data
 2. **Strong JWT secret**: Generate with `openssl rand -hex 32`
@@ -360,7 +360,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 4. **Database security**: Use strong passwords and restrict database access
 5. **CORS configuration**: Restrict allowed origins appropriately
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Docker Issues
 
@@ -395,7 +395,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Swagger UI is now publicly accessible by default
 - If you see access denied, check application logs for security configuration errors
 
-## 📞 Support
+## Support
 
 For support and questions:
 - Create an issue in the repository

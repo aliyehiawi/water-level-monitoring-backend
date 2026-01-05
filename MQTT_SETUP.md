@@ -398,9 +398,9 @@ Both work since the application runs on the same machine as Mosquitto.
 
 **Network Requirements:**
 
-- ✅ Hardware devices must be on the **same local network** (same WiFi/LAN) as your laptop
-- ✅ Both devices must be able to reach each other (no network isolation/VLAN separation)
-- ⚠️ Your laptop's IP address may change if you reconnect to WiFi
+- Hardware devices must be on the **same local network** (same WiFi/LAN) as your laptop
+- Both devices must be able to reach each other (no network isolation/VLAN separation)
+- Your laptop's IP address may change if you reconnect to WiFi
 
 **IP Address Changes:**
 If your laptop's IP changes, you'll need to update your hardware configuration. Solutions:
@@ -689,16 +689,16 @@ spring:
 
 ### Quick Start Checklist
 
-1. ✅ Install Scoop (if not already installed)
-2. ✅ Install Mosquitto: `scoop install mosquitto`
-3. ✅ Start Mosquitto: `.\start-mosquitto.ps1 start`
-4. ✅ Set environment variables:
+1. Install Scoop (if not already installed)
+2. Install Mosquitto: `scoop install mosquitto`
+3. Start Mosquitto: `.\start-mosquitto.ps1 start`
+4. Set environment variables:
    ```powershell
    $env:MQTT_BROKER_URL = "tcp://localhost:1883"
    $env:MQTT_CLIENT_ID = "water-level-backend-dev"
    ```
-5. ✅ Run application: `.\gradlew.bat bootRun`
-6. ✅ Test: Publish a message and verify it's received
+5. Run application: `.\gradlew.bat bootRun`
+6. Test: Publish a message and verify it's received
 
 ## Additional Resources
 
