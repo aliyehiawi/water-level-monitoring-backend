@@ -120,6 +120,28 @@ public class DeviceController {
   }
 
   /**
+   * Gets a device by ID.
+   *
+   * @param id the device ID
+   * @return the device details
+   */
+  @Operation(
+      summary = "Get device details",
+      description = "Retrieves details for a specific device (available to authenticated users)")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "Device details retrieved successfully"),
+    @ApiResponse(responseCode = "400", description = "Device not found"),
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+  })
+  @GetMapping("/{id}")
+  public ResponseEntity<DeviceResponse> getDeviceById(
+      @Parameter(description = "Device ID", example = "1") @PathVariable final Long id) {
+    LOGGER.debug("Get device requested: deviceId={}", id);
+    Device device = deviceService.getDeviceById(id);
+    return ResponseEntity.ok(mapToResponse(device));
+  }
+
+  /**
    * Deletes a device.
    *
    * @param id the device ID

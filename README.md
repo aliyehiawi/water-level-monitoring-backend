@@ -129,6 +129,7 @@ For detailed Docker instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md).
 
 ### Device Management
 - `GET /api/devices` - List all devices (Authenticated Users)
+- `GET /api/devices/{id}` - Get device details (Authenticated Users)
 - `POST /api/devices/register` - Register new device (returns device key) (Admin Only)
 - `DELETE /api/devices/{id}` - Delete device (Admin Only)
 

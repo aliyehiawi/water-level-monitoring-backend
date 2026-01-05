@@ -135,6 +135,30 @@
 					"response": []
 				},
 				{
+					"name": "Get Device Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/devices/:deviceId",
+							"host": ["{{base_url}}"],
+							"path": ["devices", ":deviceId"],
+							"variable": [
+								{
+									"key": "deviceId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Delete Device",
 					"request": {
 						"method": "DELETE",
