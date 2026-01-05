@@ -46,7 +46,6 @@ class UserControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void getAllUsers_Success() throws Exception {
-    // Arrange
     User user1 = new User();
     user1.setId(1L);
     user1.setUsername("user1");
@@ -65,7 +64,6 @@ class UserControllerTest {
     Page<User> userPage = new PageImpl<>(users, PageRequest.of(0, 20), 2);
     when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
 
-    // Act & Assert
     mockMvc
         .perform(get("/users"))
         .andExpect(status().isOk())
@@ -76,7 +74,6 @@ class UserControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void promoteUser_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -101,7 +98,6 @@ class UserControllerTest {
     when(userRepository.findById(2L)).thenReturn(Optional.of(user));
     when(userRepository.save(any(User.class))).thenReturn(promotedUser);
 
-    // Act & Assert
     mockMvc
         .perform(put("/users/2/promote"))
         .andExpect(status().isOk())
@@ -113,7 +109,6 @@ class UserControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void deleteUser_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -124,7 +119,6 @@ class UserControllerTest {
     when(userRepository.existsById(2L)).thenReturn(true);
     doNothing().when(userRepository).deleteById(2L);
 
-    // Act & Assert
     mockMvc.perform(delete("/users/2")).andExpect(status().isNoContent());
 
     verify(userRepository).deleteById(2L);
@@ -133,7 +127,6 @@ class UserControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void deleteUser_NotFound_ReturnsNotFound() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -143,7 +136,6 @@ class UserControllerTest {
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(userRepository.existsById(2L)).thenReturn(false);
 
-    // Act & Assert
     mockMvc.perform(delete("/users/2")).andExpect(status().isBadRequest());
 
     verify(userRepository, never()).deleteById(any());

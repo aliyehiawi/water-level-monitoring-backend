@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for threshold update request. */
 @Getter
 @Setter
 @NoArgsConstructor

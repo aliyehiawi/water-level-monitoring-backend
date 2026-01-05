@@ -27,11 +27,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Controller for threshold management endpoints (admin only). */
+/** Controller for threshold management endpoints. */
 @RestController
 @RequestMapping("/devices/{deviceId}/thresholds")
-@PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Threshold Management", description = "Admin operations for device thresholds")
+@Tag(name = "Threshold Management", description = "Device threshold operations")
 public class ThresholdController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ThresholdController.class);
@@ -63,18 +62,19 @@ public class ThresholdController {
    */
   @Operation(
       summary = "Get device thresholds",
-      description = "Retrieves the current min and max thresholds for a device")
+      description =
+          "Retrieves the current min and max thresholds for a device (available to authenticated users)")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "Thresholds retrieved successfully"),
-    @ApiResponse(responseCode = "400", description = "Device not found or access denied")
+    @ApiResponse(responseCode = "400", description = "Device not found"),
+    @ApiResponse(responseCode = "401", description = "Authentication required")
   })
   @GetMapping
   public ResponseEntity<ThresholdResponse> getThresholds(
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long deviceId) {
     LOGGER.debug("Get thresholds request for deviceId: {}", deviceId);
-    User admin = userService.getCurrentUser();
 
-    Device device = deviceService.validateDeviceOwnership(deviceId, admin.getId());
+    Device device = deviceService.getDeviceById(deviceId);
 
     ThresholdResponse response =
         new ThresholdResponse(device.getMinThreshold(), device.getMaxThreshold());
@@ -96,6 +96,7 @@ public class ThresholdController {
     @ApiResponse(responseCode = "200", description = "Thresholds updated successfully"),
     @ApiResponse(responseCode = "400", description = "Invalid thresholds or validation failed")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PutMapping
   public ResponseEntity<ThresholdResponse> updateThresholds(
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long deviceId,

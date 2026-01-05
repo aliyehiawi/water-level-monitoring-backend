@@ -4,6 +4,7 @@ import com.example.waterlevel.constants.SecurityConstants;
 import com.example.waterlevel.filter.JwtAuthenticationFilter;
 import com.example.waterlevel.filter.RateLimitingFilter;
 import com.example.waterlevel.filter.RequestLoggingFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -36,7 +36,7 @@ public class SecurityConfig {
   private final RateLimitingFilter rateLimitingFilter;
   private final Environment environment;
 
-  @Value("${spring.websocket.allowed-origins:}")
+  @Value("${cors.allowed-origins:}")
   private String allowedOrigins;
 
   @Value("${cors.max-age-seconds:" + SecurityConstants.DEFAULT_CORS_MAX_AGE_SECONDS + "}")
@@ -79,7 +79,7 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
             auth -> {
-              auth.requestMatchers("/auth/**").permitAll();
+              auth.requestMatchers("/auth/register", "/auth/login").permitAll();
               auth.requestMatchers("/ws/**").permitAll();
               auth.requestMatchers("/actuator/health").permitAll();
 
@@ -93,12 +93,18 @@ public class SecurityConfig {
                     .permitAll();
               }
 
-              auth.requestMatchers("/users/**").hasRole("ADMIN");
-              auth.requestMatchers(HttpMethod.GET, "/devices/*/water-level-data/**")
-                  .authenticated();
-              auth.requestMatchers("/devices/**").hasRole("ADMIN");
               auth.anyRequest().authenticated();
             })
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(
+                        (request, response, authException) ->
+                            response.sendError(
+                                HttpServletResponse.SC_UNAUTHORIZED, "Authentication required"))
+                    .accessDeniedHandler(
+                        (request, response, accessDeniedException) ->
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied")))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)

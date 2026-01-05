@@ -49,7 +49,6 @@ class DeviceControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void registerDevice_Success() throws Exception {
-    // Arrange
     DeviceRegisterRequest request = new DeviceRegisterRequest();
     request.setName("Test Device");
     request.setMinThreshold(10.0);
@@ -71,7 +70,6 @@ class DeviceControllerTest {
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(deviceService.registerDevice(any(), any())).thenReturn(device);
 
-    // Act & Assert
     mockMvc
         .perform(
             post("/devices/register")
@@ -84,7 +82,6 @@ class DeviceControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void getAllDevices_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -100,7 +97,6 @@ class DeviceControllerTest {
     Page<Device> devicePage = new PageImpl<>(devices, PageRequest.of(0, 20), 1);
     when(deviceService.getAllDevices(any(Pageable.class))).thenReturn(devicePage);
 
-    // Act & Assert
     mockMvc
         .perform(get("/devices"))
         .andExpect(status().isOk())
@@ -110,7 +106,6 @@ class DeviceControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void deleteDevice_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -121,7 +116,6 @@ class DeviceControllerTest {
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
 
-    // Act & Assert
     mockMvc.perform(delete("/devices/1")).andExpect(status().isNoContent());
 
     verify(deviceService).deleteDevice(1L);

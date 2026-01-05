@@ -161,7 +161,6 @@ public class MqttServiceImpl implements MqttService {
       }
     }
 
-    // Retry logic with exponential backoff using async scheduling
     CompletableFuture<Boolean> future = new CompletableFuture<>();
     long delay = initialDelayMs;
 

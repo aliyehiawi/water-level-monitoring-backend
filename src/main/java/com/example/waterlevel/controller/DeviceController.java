@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -30,11 +32,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Controller for device management endpoints (admin only). */
+/** Controller for device management endpoints. */
 @RestController
 @RequestMapping("/devices")
-@PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Device Management", description = "Admin operations for managing devices")
+@Tag(name = "Device Management", description = "Device management operations")
 public class DeviceController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DeviceController.class);
@@ -67,6 +68,7 @@ public class DeviceController {
         responseCode = "400",
         description = "Invalid request data or threshold validation failed")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping("/register")
   public ResponseEntity<DeviceResponse> registerDevice(
       @Valid @RequestBody final DeviceRegisterRequest request) {
@@ -91,18 +93,23 @@ public class DeviceController {
    * @param size page size (default: 20)
    * @return paginated list of devices
    */
-  @Operation(summary = "Get all devices", description = "Retrieves a paginated list of all devices")
-  @ApiResponse(responseCode = "200", description = "Devices retrieved successfully")
+  @Operation(
+      summary = "Get all devices",
+      description = "Retrieves a paginated list of all devices (available to authenticated users)")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "Devices retrieved successfully"),
+    @ApiResponse(responseCode = "401", description = "Authentication required")
+  })
   @GetMapping
   public ResponseEntity<Page<DeviceResponse>> getAllDevices(
       @Parameter(description = "Page number (0-indexed)", example = "0")
           @RequestParam(defaultValue = "0")
-          @jakarta.validation.constraints.Min(value = 0, message = "Page number must be >= 0")
+          @Min(value = 0, message = "Page number must be >= 0")
           final int page,
       @Parameter(description = "Page size", example = "20")
           @RequestParam(defaultValue = "20")
-          @jakarta.validation.constraints.Min(value = 1, message = "Page size must be >= 1")
-          @jakarta.validation.constraints.Max(value = 100, message = "Page size must be <= 100")
+          @Min(value = 1, message = "Page size must be >= 1")
+          @Max(value = 100, message = "Page size must be <= 100")
           final int size) {
     LOGGER.debug("Get all devices requested: page={}, size={}", page, size);
     Pageable pageable = PageRequest.of(page, size);
@@ -125,6 +132,7 @@ public class DeviceController {
     @ApiResponse(responseCode = "204", description = "Device deleted successfully"),
     @ApiResponse(responseCode = "400", description = "Device not found or access denied")
   })
+  @PreAuthorize("hasRole('ADMIN')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteDevice(
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long id) {

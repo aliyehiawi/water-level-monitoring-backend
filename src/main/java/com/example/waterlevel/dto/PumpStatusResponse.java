@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for pump status responses. */
 @Getter
 @Setter
 @NoArgsConstructor

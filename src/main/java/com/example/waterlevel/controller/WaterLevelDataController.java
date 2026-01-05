@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -49,12 +51,12 @@ public class WaterLevelDataController {
       @Parameter(description = "Device ID", example = "1") @PathVariable final Long deviceId,
       @Parameter(description = "Page number (0-indexed)", example = "0")
           @RequestParam(defaultValue = "0")
-          @jakarta.validation.constraints.Min(value = 0, message = "Page number must be >= 0")
+          @Min(value = 0, message = "Page number must be >= 0")
           final int page,
       @Parameter(description = "Page size", example = "20")
           @RequestParam(defaultValue = "20")
-          @jakarta.validation.constraints.Min(value = 1, message = "Page size must be >= 1")
-          @jakarta.validation.constraints.Max(value = 200, message = "Page size must be <= 200")
+          @Min(value = 1, message = "Page size must be >= 1")
+          @Max(value = 200, message = "Page size must be <= 200")
           final int size) {
     LOGGER.debug(
         "Get water level data request: deviceId={}, page={}, size={}", deviceId, page, size);

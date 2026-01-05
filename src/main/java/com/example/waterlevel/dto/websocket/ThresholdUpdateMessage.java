@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for threshold update WebSocket message. */
 @Getter
 @Setter
 @NoArgsConstructor

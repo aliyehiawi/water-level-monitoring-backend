@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** DTO for MQTT threshold update command. */
 @Getter
 @Setter
 @NoArgsConstructor

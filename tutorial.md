@@ -170,12 +170,14 @@ curl -X POST http://localhost:8080/api/devices/register \
 
 **Important:** Save the `deviceKey` - it's required for hardware device configuration.
 
-### Listing All Devices
+### Listing All Devices (Authenticated Users)
+
+**Note:** This endpoint is available to all authenticated users (USER and ADMIN roles).
 
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/devices?page=0&size=20" \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Response:**
@@ -244,10 +246,10 @@ curl -X GET "http://localhost:8080/api/devices/1/water-level-data?page=0&size=20
 - Data is returned in descending order by timestamp (latest first)
 - Available to all authenticated users (not restricted to ADMIN)
 - The data is stored in the `water_level_data` table with the following structure:
-  - `device_id`: Reference to the device
-  - `water_level`: Numeric value
+- `device_id`: Reference to the device
+- `water_level`: Numeric value
   - `pump_status`: Enum value (ON, OFF, UNKNOWN)
-  - `timestamp`: When the reading was taken
+- `timestamp`: When the reading was taken
 
 ## Pump Control
 
@@ -260,12 +262,7 @@ curl -X POST http://localhost:8080/api/devices/1/pump/start \
 ```
 
 **Response:**
-```json
-{
-  "message": "Pump start command sent successfully",
-  "deviceId": 1
-}
-```
+Returns `200 OK` with an empty body.
 
 **How it works:**
 1. Backend validates device ownership
@@ -285,7 +282,6 @@ curl -X GET http://localhost:8080/api/devices/1/pump/status \
 ```json
 {
   "pumpStatus": "ON",
-  "deviceId": 1,
   "lastUpdate": "2024-01-01T10:05:00"
 }
 ```
@@ -300,20 +296,21 @@ Thresholds define the safe operating range for water levels:
 
 When water level goes below min or above max, the system can trigger alerts or automated actions.
 
-### Get Current Thresholds
+### Get Current Thresholds (Authenticated Users)
+
+**Note:** This endpoint is available to all authenticated users (USER and ADMIN roles).
 
 **Request:**
 ```bash
 curl -X GET http://localhost:8080/api/devices/1/thresholds \
-  -H "Authorization: Bearer ADMIN_JWT_TOKEN"
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Response:**
 ```json
 {
   "minThreshold": 10.0,
-  "maxThreshold": 80.0,
-  "deviceId": 1
+  "maxThreshold": 80.0
 }
 ```
 
@@ -334,8 +331,7 @@ curl -X PUT http://localhost:8080/api/devices/1/thresholds \
 ```json
 {
   "minThreshold": 15.0,
-  "maxThreshold": 85.0,
-  "deviceId": 1
+  "maxThreshold": 85.0
 }
 ```
 
@@ -385,8 +381,7 @@ stompClient.connect({}, function(frame) {
   "type": "threshold_updated",
   "deviceId": 1,
   "minThreshold": 15.0,
-  "maxThreshold": 85.0,
-  "timestamp": "2024-01-01T10:05:00"
+  "maxThreshold": 85.0
 }
 ```
 

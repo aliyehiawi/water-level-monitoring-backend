@@ -9,7 +9,6 @@ import com.example.waterlevel.repository.UserRepository;
 import com.example.waterlevel.repository.WaterLevelDataRepository;
 import com.example.waterlevel.service.DeviceService;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,17 +68,6 @@ public class DeviceServiceImpl implements DeviceService {
         savedDevice.getId(),
         savedDevice.getDeviceKey());
     return savedDevice;
-  }
-
-  /**
-   * Gets all devices.
-   *
-   * @return list of all devices
-   */
-  @Override
-  @Transactional(readOnly = true)
-  public List<Device> getAllDevices() {
-    return deviceRepository.findAll();
   }
 
   /**

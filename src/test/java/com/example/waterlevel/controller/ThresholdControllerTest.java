@@ -47,22 +47,32 @@ class ThresholdControllerTest {
   @Autowired private ObjectMapper objectMapper;
 
   @Test
-  @WithMockUser(roles = "ADMIN", username = "admin")
-  void getThresholds_Success() throws Exception {
-    // Arrange
-    User admin = new User();
-    admin.setId(1L);
-    admin.setUsername("admin");
+  @WithMockUser(roles = "USER", username = "testuser")
+  void getThresholds_AsUser_Success() throws Exception {
     Device device = new Device();
     device.setId(1L);
     device.setMinThreshold(BigDecimal.valueOf(10.0));
     device.setMaxThreshold(BigDecimal.valueOf(90.0));
-    device.setAdmin(admin);
 
-    when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
-    when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
+    when(deviceService.getDeviceById(1L)).thenReturn(device);
 
-    // Act & Assert
+    mockMvc
+        .perform(get("/devices/1/thresholds"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.minThreshold").value(10.0))
+        .andExpect(jsonPath("$.maxThreshold").value(90.0));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN", username = "admin")
+  void getThresholds_AsAdmin_Success() throws Exception {
+    Device device = new Device();
+    device.setId(1L);
+    device.setMinThreshold(BigDecimal.valueOf(10.0));
+    device.setMaxThreshold(BigDecimal.valueOf(90.0));
+
+    when(deviceService.getDeviceById(1L)).thenReturn(device);
+
     mockMvc
         .perform(get("/devices/1/thresholds"))
         .andExpect(status().isOk())
@@ -73,7 +83,6 @@ class ThresholdControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void updateThresholds_Success() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -109,7 +118,6 @@ class ThresholdControllerTest {
         .when(auditService)
         .logThresholdUpdate(anyLong(), anyLong(), anyDouble(), anyDouble());
 
-    // Act & Assert
     mockMvc
         .perform(
             put("/devices/1/thresholds")
@@ -126,7 +134,6 @@ class ThresholdControllerTest {
   @Test
   @WithMockUser(roles = "ADMIN", username = "admin")
   void updateThresholds_InvalidThresholds_ReturnsBadRequest() throws Exception {
-    // Arrange
     User admin = new User();
     admin.setId(1L);
     admin.setUsername("admin");
@@ -141,7 +148,6 @@ class ThresholdControllerTest {
     when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
     when(deviceService.validateDeviceOwnership(1L, 1L)).thenReturn(device);
 
-    // Act & Assert
     mockMvc
         .perform(
             put("/devices/1/thresholds")
